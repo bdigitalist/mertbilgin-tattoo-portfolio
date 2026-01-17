@@ -1,12 +1,55 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useCallback } from 'react';
+import { WebGLCanvas } from '@/components/WebGLGrid/WebGLCanvas';
+import { HUDHeader } from '@/components/HUD/HUDHeader';
+import { FooterTitle } from '@/components/HUD/FooterTitle';
+import { InfoPanel } from '@/components/HUD/InfoPanel';
+import { CRTOverlay } from '@/components/Effects/CRTOverlay';
+import { ProgressiveBlur } from '@/components/Effects/ProgressiveBlur';
+import { CustomCursor } from '@/components/Effects/CustomCursor';
+import { Preloader } from '@/components/Preloader/Preloader';
+import { Lightbox } from '@/components/Lightbox/Lightbox';
+import { useGridStore } from '@/store/useGridStore';
+import { useIsTouchDevice } from '@/hooks/useIsTouchDevice';
+import { GridItem } from '@/data/portfolioData';
 
 const Index = () => {
+  const isTouchDevice = useIsTouchDevice();
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 900;
+  const { setSelectedItem, isPreloaderComplete } = useGridStore();
+  
+  const handleItemClick = useCallback((item: GridItem) => {
+    setSelectedItem(item);
+  }, [setSelectedItem]);
+  
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="relative min-h-screen overflow-hidden bg-background">
+      {/* Preloader */}
+      <Preloader />
+      
+      {/* WebGL Grid */}
+      {isPreloaderComplete && (
+        <WebGLCanvas onItemClick={handleItemClick} />
+      )}
+      
+      {/* Progressive blur edges */}
+      <ProgressiveBlur position="top" />
+      <ProgressiveBlur position="bottom" />
+      
+      {/* HUD */}
+      <HUDHeader isMobile={isMobile} />
+      <FooterTitle />
+      
+      {/* Info panel (desktop only) */}
+      {!isMobile && <InfoPanel />}
+      
+      {/* CRT overlay effect */}
+      <CRTOverlay />
+      
+      {/* Custom cursor (desktop only) */}
+      {!isTouchDevice && <CustomCursor />}
+      
+      {/* Lightbox modal */}
+      <Lightbox />
     </div>
   );
 };
