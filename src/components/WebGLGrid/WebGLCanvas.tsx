@@ -27,10 +27,13 @@ export const WebGLCanvas = ({ onItemClick }: WebGLCanvasProps) => {
           far: 1000
         }}
         gl={{
-          antialias: true,
+          antialias: false,
           alpha: false,
-          powerPreference: 'high-performance'
+          powerPreference: 'high-performance',
+          preserveDrawingBuffer: false
         }}
+        dpr={[1, 1.5]}
+        frameloop="always"
         style={{ background: 'hsl(0 0% 4%)' }}
       >
         <GridManager onItemClick={onItemClick} />
