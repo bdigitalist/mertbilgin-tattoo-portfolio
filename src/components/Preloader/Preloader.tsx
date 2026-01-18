@@ -6,37 +6,32 @@ import gsap from 'gsap';
 const INTRO_TEXT = "WHAT APPEARS HERE IS NOT A SHOWCASE, BUT THE TRACE OF A PRACTICE";
 
 export const Preloader = () => {
-  const { isPreloaderComplete, setPreloaderComplete, loadedImages } = useGridStore();
+  const { isPreloaderComplete, setPreloaderComplete } = useGridStore();
   const [count, setCount] = useState(0);
   const [showText, setShowText] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
   
   const containerRef = useRef<HTMLDivElement>(null);
   const thumbnailRef = useRef<HTMLDivElement>(null);
-  const progressRef = useRef<HTMLDivElement>(null);
   
-  // Preload images
+  // Simulate loading progress (faster for demo)
   useEffect(() => {
-    const totalImages = portfolioItems.length;
-    let loaded = 0;
+    let current = 0;
+    const interval = setInterval(() => {
+      current += Math.random() * 15 + 5;
+      if (current >= 100) {
+        current = 100;
+        clearInterval(interval);
+        setCount(100);
+      } else {
+        setCount(Math.floor(current));
+      }
+    }, 100);
     
-    portfolioItems.forEach((item) => {
-      const img = new Image();
-      img.onload = () => {
-        loaded++;
-        const progress = Math.floor((loaded / totalImages) * 100);
-        setCount(progress);
-      };
-      img.onerror = () => {
-        loaded++;
-        const progress = Math.floor((loaded / totalImages) * 100);
-        setCount(progress);
-      };
-      img.src = item.src;
-    });
+    return () => clearInterval(interval);
   }, []);
   
-  // Animation timeline
+  // Animation timeline when count reaches 100
   useEffect(() => {
     if (count < 100) return;
     
@@ -45,22 +40,22 @@ export const Preloader = () => {
         setIsExiting(true);
         setTimeout(() => {
           setPreloaderComplete(true);
-        }, 800);
+        }, 600);
       }
     });
     
     // Reveal thumbnail
     tl.to(thumbnailRef.current, {
       clipPath: 'inset(0 0 0 0)',
-      duration: 0.8,
+      duration: 0.6,
       ease: 'power3.out'
-    }, 0.3);
+    }, 0.2);
     
     // Show intro text
-    tl.call(() => setShowText(true), [], 1.5);
+    tl.call(() => setShowText(true), [], 0.8);
     
     // Wait then exit
-    tl.to({}, { duration: 1.5 });
+    tl.to({}, { duration: 1 });
     
   }, [count, setPreloaderComplete]);
   
@@ -71,7 +66,7 @@ export const Preloader = () => {
     gsap.to(containerRef.current, {
       scaleY: 0,
       transformOrigin: 'top',
-      duration: 0.6,
+      duration: 0.5,
       ease: 'power3.inOut'
     });
   }, [isExiting]);
@@ -90,6 +85,7 @@ export const Preloader = () => {
           src={portfolioItems[0]?.src}
           alt="Preview"
           className="w-full h-full object-cover"
+          crossOrigin="anonymous"
         />
       </div>
       
@@ -101,11 +97,10 @@ export const Preloader = () => {
       {/* Progress bar */}
       <div className="preloader-progress">
         <div 
-          ref={progressRef}
           className="preloader-progress-bar"
           style={{ 
             transform: `scaleX(${count / 100})`,
-            transition: 'transform 0.3s ease-out'
+            transition: 'transform 0.15s ease-out'
           }}
         />
       </div>

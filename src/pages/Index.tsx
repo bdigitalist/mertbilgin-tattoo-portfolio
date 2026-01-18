@@ -27,9 +27,7 @@ const Index = () => {
       <Preloader />
       
       {/* WebGL Grid */}
-      {isPreloaderComplete && (
-        <WebGLCanvas onItemClick={handleItemClick} />
-      )}
+      <WebGLCanvas onItemClick={handleItemClick} />
       
       {/* Progressive blur edges */}
       <ProgressiveBlur position="top" />

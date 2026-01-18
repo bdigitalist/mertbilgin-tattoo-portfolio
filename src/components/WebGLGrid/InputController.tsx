@@ -1,16 +1,12 @@
 import { useEffect, useRef, useCallback } from 'react';
+import { useThree } from '@react-three/fiber';
 import { useGridStore } from '@/store/useGridStore';
 
-const SCROLL_SPEED = 1.5;
+const SCROLL_SPEED = 1.2;
 const DRAG_SPEED = 1;
 
 export const InputController = () => {
-  const { 
-    addScroll, 
-    setVelocity, 
-    setIsDragging,
-    setIsScrolling
-  } = useGridStore();
+  const { gl } = useThree();
   
   const lastMouseRef = useRef({ x: 0, y: 0 });
   const velocityHistoryRef = useRef<Array<{ x: number; y: number; time: number }>>([]);
@@ -20,6 +16,8 @@ export const InputController = () => {
   const handleWheel = useCallback((e: WheelEvent) => {
     e.preventDefault();
     
+    const { addScroll, setVelocity, setIsScrolling } = useGridStore.getState();
+    
     // Convert wheel delta to scroll movement
     const deltaX = e.deltaX * SCROLL_SPEED;
     const deltaY = e.deltaY * SCROLL_SPEED;
@@ -28,18 +26,18 @@ export const InputController = () => {
     setIsScrolling(true);
     
     // Set velocity for smooth stop
-    setVelocity(deltaX * 0.5, deltaY * 0.5);
-  }, [addScroll, setVelocity, setIsScrolling]);
+    setVelocity(deltaX * 0.3, deltaY * 0.3);
+  }, []);
   
   // Handle mouse/touch drag
   const handlePointerDown = useCallback((e: PointerEvent) => {
     isDraggingRef.current = true;
-    setIsDragging(true);
+    useGridStore.getState().setIsDragging(true);
     lastMouseRef.current = { x: e.clientX, y: e.clientY };
     velocityHistoryRef.current = [];
     
-    (e.target as Element)?.setPointerCapture(e.pointerId);
-  }, [setIsDragging]);
+    (e.target as Element)?.setPointerCapture?.(e.pointerId);
+  }, []);
   
   const handlePointerMove = useCallback((e: PointerEvent) => {
     if (!isDraggingRef.current) return;
@@ -47,7 +45,7 @@ export const InputController = () => {
     const deltaX = (lastMouseRef.current.x - e.clientX) * DRAG_SPEED;
     const deltaY = (lastMouseRef.current.y - e.clientY) * DRAG_SPEED;
     
-    addScroll(deltaX, deltaY);
+    useGridStore.getState().addScroll(deltaX, deltaY);
     
     // Track velocity history for inertia
     const now = performance.now();
@@ -59,32 +57,35 @@ export const InputController = () => {
     }
     
     lastMouseRef.current = { x: e.clientX, y: e.clientY };
-  }, [addScroll]);
+  }, []);
   
   const handlePointerUp = useCallback((e: PointerEvent) => {
     if (!isDraggingRef.current) return;
     
     isDraggingRef.current = false;
-    setIsDragging(false);
     
-    (e.target as Element)?.releasePointerCapture(e.pointerId);
+    (e.target as Element)?.releasePointerCapture?.(e.pointerId);
     
     // Calculate average velocity from history
     const history = velocityHistoryRef.current;
+    let avgVx = 0;
+    let avgVy = 0;
+    
     if (history.length >= 2) {
       const recentHistory = history.slice(-3);
-      const avgVx = recentHistory.reduce((sum, h) => sum + h.x, 0) / recentHistory.length;
-      const avgVy = recentHistory.reduce((sum, h) => sum + h.y, 0) / recentHistory.length;
-      
-      setVelocity(avgVx * 2, avgVy * 2);
+      avgVx = recentHistory.reduce((sum, h) => sum + h.x, 0) / recentHistory.length;
+      avgVy = recentHistory.reduce((sum, h) => sum + h.y, 0) / recentHistory.length;
     }
     
+    const { setIsDragging, setVelocity } = useGridStore.getState();
+    setVelocity(avgVx * 1.5, avgVy * 1.5);
+    setIsDragging(false);
+    
     velocityHistoryRef.current = [];
-  }, [setIsDragging, setVelocity]);
+  }, []);
   
   useEffect(() => {
-    const canvas = document.querySelector('canvas');
-    if (!canvas) return;
+    const canvas = gl.domElement;
     
     // Wheel events
     canvas.addEventListener('wheel', handleWheel, { passive: false });
@@ -102,7 +103,7 @@ export const InputController = () => {
       window.removeEventListener('pointerup', handlePointerUp);
       window.removeEventListener('pointercancel', handlePointerUp);
     };
-  }, [handleWheel, handlePointerDown, handlePointerMove, handlePointerUp]);
+  }, [gl.domElement, handleWheel, handlePointerDown, handlePointerMove, handlePointerUp]);
   
   return null;
 };
