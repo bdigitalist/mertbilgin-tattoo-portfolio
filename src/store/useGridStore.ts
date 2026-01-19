@@ -1,5 +1,9 @@
 import { create } from 'zustand';
 import { GridItem } from '@/data/portfolioData';
+import { calculateGridConfigSync } from '@/hooks/useGridConfig';
+
+// Calculate initial values synchronously to avoid frame jump
+const initialConfig = calculateGridConfigSync();
 
 interface GridState {
   // Scroll position (both axes for bidirectional scroll)
@@ -44,17 +48,17 @@ interface GridState {
 }
 
 export const useGridStore = create<GridState>((set) => ({
-  // Initial state
+  // Initial state - use calculated values to avoid frame jump on mobile
   scrollX: 0,
   scrollY: 0,
   targetScrollX: 0,
   targetScrollY: 0,
   velocityX: 0,
   velocityY: 0,
-  columns: 4,
-  cellWidth: 300,
-  cellHeight: 225,
-  gap: 16,
+  columns: initialConfig.columns,
+  cellWidth: initialConfig.cellWidth,
+  cellHeight: initialConfig.cellHeight,
+  gap: initialConfig.gap,
   isDragging: false,
   isScrolling: false,
   isPreloaderComplete: false,

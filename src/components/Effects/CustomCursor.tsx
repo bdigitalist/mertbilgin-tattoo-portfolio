@@ -8,6 +8,7 @@ const CURSOR_STOP_THRESHOLD = 0.5; // Stop animating when within 0.5px of target
 export const CustomCursor = () => {
   const isTouchDevice = useIsTouchDevice();
   const isDragging = useGridStore((state) => state.isDragging);
+  const selectedItem = useGridStore((state) => state.selectedItem);
 
   const cursorRef = useRef<HTMLDivElement>(null);
   const positionRef = useRef({ x: -100, y: -100 });
@@ -47,10 +48,12 @@ export const CustomCursor = () => {
 
   // Start animation if not already running
   const startAnimation = useCallback(() => {
-    if (!isAnimatingRef.current) {
-      isAnimatingRef.current = true;
-      rafRef.current = requestAnimationFrame(animate);
+    // Cancel any existing RAF first
+    if (rafRef.current) {
+      cancelAnimationFrame(rafRef.current);
     }
+    isAnimatingRef.current = true;
+    rafRef.current = requestAnimationFrame(animate);
   }, [animate]);
 
   useEffect(() => {
@@ -97,6 +100,17 @@ export const CustomCursor = () => {
       if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
     };
   }, [isDragging, isTouchDevice, startAnimation]);
+
+  // Restart animation when lightbox closes
+  useEffect(() => {
+    if (isTouchDevice) return;
+
+    // When lightbox closes (selectedItem becomes null), force restart animation
+    if (selectedItem === null) {
+      isAnimatingRef.current = false;
+      startAnimation();
+    }
+  }, [selectedItem, isTouchDevice, startAnimation]);
 
   // Scroll-based hiding
   useEffect(() => {

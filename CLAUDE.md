@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm run dev          # Start dev server (default port 5173)
+npm run dev          # Start dev server on port 8080
 npm run build        # Production build (TypeScript + Vite)
 npm run build:dev    # Development build with source maps
 npm run preview      # Preview production build locally

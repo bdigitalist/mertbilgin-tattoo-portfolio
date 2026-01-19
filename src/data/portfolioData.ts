@@ -195,22 +195,24 @@ export const portfolioItems: GridItem[] = [
 
 // Personal information - customize with your details
 export const personalInfo = {
-  location: "BASED IN ITALY,",
+  location: "BASED IN ISTANBUL,",
   tagline: "WORKING GLOBALLY.",
-  timezone: "CET",
+  timezone: "TRT",
   description: "WHAT APPEARS HERE IS NOT A SHOWCASE, BUT THE TRACE OF A PRACTICE. EACH PROJECT IS A MOMENT OF EXPLORATION, A DIALOGUE BETWEEN VISION AND EXECUTION.",
   expertise: [
-    "ART DIRECTION",
-    "WEB DESIGN + DEV",
-    "WEBFLOW DEVELOPMENT"
+    "TATTOO ART",
+    "TATTOO DESIGN",
+    "PHOTOGRAPHY"
   ],
   socials: [
-    { label: "AWWWARDS", href: "#" },
-    { label: "LINKEDIN", href: "#" },
+    { label: "INSTAGRAM", href: "https://www.instagram.com/mert.coo/" },
+    { label: "BEHANCE", href: "#" },
     { label: "CONTACTS", href: "#" }
   ],
   cta: [
-    { label: "THE ARCHIVE", href: "#" },
-    { label: "THE PROFILE", href: "#" }
+    { label: "MY BIO", href: "#" },
+    { label: "AVAILIBLE DESIGNS", href: "#" },
+    { label: "BOOK / CONTACT", href: "#" }
+
   ]
 };

@@ -182,6 +182,18 @@ export const GridManager = ({ onItemClick }: GridManagerProps) => {
           material={materials[index]}
           onClick={(e) => {
             e.stopPropagation();
+            // Don't open lightbox if this was a drag
+            if (useGridStore.getState().isDragging) return;
+            const mesh = e.object as THREE.Mesh;
+            const mat = mesh.material as THREE.MeshBasicMaterial;
+            // Reset hover state before opening lightbox
+            mat.color.setRGB(1, 1, 1);
+            if (mesh.userData.baseScale) {
+              mesh.scale.x = mesh.userData.baseScale.x;
+              mesh.scale.y = mesh.userData.baseScale.y;
+            }
+            mesh.position.z = 0;
+            document.body.style.cursor = 'none';
             const item = e.object.userData.item;
             if (item) onItemClick(item);
           }}

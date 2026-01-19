@@ -48,6 +48,9 @@ export const Lightbox = () => {
   }, [selectedItem]);
 
   const handleClose = () => {
+    // Reset cursor to prevent stuck state
+    document.body.style.cursor = 'none';
+
     if (!overlayRef.current || !contentRef.current) {
       setSelectedItem(null);
       return;
