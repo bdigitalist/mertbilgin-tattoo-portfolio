@@ -13,7 +13,7 @@ export interface GridItem {
 export const portfolioItems: GridItem[] = [
   {
     id: "project-1",
-    src: "/src/assets/imagery/1.PNG",
+    src: "/imagery/1.PNG",
     alt: "Project 1",
     title: "Project One",
     category: "Photography",
@@ -22,7 +22,7 @@ export const portfolioItems: GridItem[] = [
   },
   {
     id: "project-2",
-    src: "/src/assets/imagery/2.PNG",
+    src: "/imagery/2.PNG",
     alt: "Project 2",
     title: "Project Two",
     category: "Art Direction",
@@ -31,7 +31,7 @@ export const portfolioItems: GridItem[] = [
   },
   {
     id: "project-3",
-    src: "/src/assets/imagery/DSCF0425.JPG",
+    src: "/imagery/DSCF0425.JPG",
     alt: "Project 3",
     title: "Project Three",
     category: "Photography",
@@ -40,7 +40,7 @@ export const portfolioItems: GridItem[] = [
   },
   {
     id: "project-4",
-    src: "/src/assets/imagery/DSCF0503.JPG",
+    src: "/imagery/DSCF0503.JPG",
     alt: "Project 4",
     title: "Project Four",
     category: "Photography",
@@ -49,7 +49,7 @@ export const portfolioItems: GridItem[] = [
   },
   {
     id: "project-5",
-    src: "/src/assets/imagery/DSCF0516.JPG",
+    src: "/imagery/DSCF0516.JPG",
     alt: "Project 5",
     title: "Project Five",
     category: "Photography",
@@ -58,7 +58,7 @@ export const portfolioItems: GridItem[] = [
   },
   {
     id: "project-6",
-    src: "/src/assets/imagery/DSCF0586.PNG",
+    src: "/imagery/DSCF0586.PNG",
     alt: "Project 6",
     title: "Project Six",
     category: "Digital Art",
@@ -67,7 +67,7 @@ export const portfolioItems: GridItem[] = [
   },
   {
     id: "project-7",
-    src: "/src/assets/imagery/DSCF1070.JPG",
+    src: "/imagery/DSCF1070.JPG",
     alt: "Project 7",
     title: "Project Seven",
     category: "Photography",
@@ -76,7 +76,7 @@ export const portfolioItems: GridItem[] = [
   },
   {
     id: "project-8",
-    src: "/src/assets/imagery/DSCF1086.JPG",
+    src: "/imagery/DSCF1086.JPG",
     alt: "Project 8",
     title: "Project Eight",
     category: "Photography",
@@ -85,7 +85,7 @@ export const portfolioItems: GridItem[] = [
   },
   {
     id: "project-9",
-    src: "/src/assets/imagery/DSCF1221.JPG",
+    src: "/imagery/DSCF1221.JPG",
     alt: "Project 9",
     title: "Project Nine",
     category: "Photography",
@@ -94,7 +94,7 @@ export const portfolioItems: GridItem[] = [
   },
   {
     id: "project-10",
-    src: "/src/assets/imagery/DSCF1229.JPG",
+    src: "/imagery/DSCF1229.JPG",
     alt: "Project 10",
     title: "Project Ten",
     category: "Photography",
@@ -103,7 +103,7 @@ export const portfolioItems: GridItem[] = [
   },
   {
     id: "project-11",
-    src: "/src/assets/imagery/DSCF1967.JPG",
+    src: "/imagery/DSCF1967.JPG",
     alt: "Project 11",
     title: "Project Eleven",
     category: "Photography",
@@ -112,7 +112,7 @@ export const portfolioItems: GridItem[] = [
   },
   {
     id: "project-12",
-    src: "/src/assets/imagery/DSCF2277.JPG",
+    src: "/imagery/DSCF2277.JPG",
     alt: "Project 12",
     title: "Project Twelve",
     category: "Photography",
@@ -121,7 +121,7 @@ export const portfolioItems: GridItem[] = [
   },
   {
     id: "project-13",
-    src: "/src/assets/imagery/DSCF9517.jpg",
+    src: "/imagery/DSCF9517.jpg",
     alt: "Project 13",
     title: "Project Thirteen",
     category: "Photography",
@@ -130,7 +130,7 @@ export const portfolioItems: GridItem[] = [
   },
   {
     id: "project-14",
-    src: "/src/assets/imagery/DSCF9941 2.JPG",
+    src: "/imagery/DSCF9941 2.JPG",
     alt: "Project 14",
     title: "Project Fourteen",
     category: "Photography",
@@ -139,7 +139,7 @@ export const portfolioItems: GridItem[] = [
   },
   {
     id: "project-15",
-    src: "/src/assets/imagery/IMG_3275.PNG",
+    src: "/imagery/IMG_3275.PNG",
     alt: "Project 15",
     title: "Project Fifteen",
     category: "Digital",
@@ -148,7 +148,7 @@ export const portfolioItems: GridItem[] = [
   },
   {
     id: "project-16",
-    src: "/src/assets/imagery/IMG_3487.JPG",
+    src: "/imagery/IMG_3487.JPG",
     alt: "Project 16",
     title: "Project Sixteen",
     category: "Photography",
@@ -157,7 +157,7 @@ export const portfolioItems: GridItem[] = [
   },
   {
     id: "project-17",
-    src: "/src/assets/imagery/IMG_6883.JPG",
+    src: "/imagery/IMG_6883.JPG",
     alt: "Project 17",
     title: "Project Seventeen",
     category: "Photography",
@@ -166,7 +166,7 @@ export const portfolioItems: GridItem[] = [
   },
   {
     id: "project-18",
-    src: "/src/assets/imagery/IMG_6942.PNG",
+    src: "/imagery/IMG_6942.PNG",
     alt: "Project 18",
     title: "Project Eighteen",
     category: "Digital",
@@ -175,7 +175,7 @@ export const portfolioItems: GridItem[] = [
   },
   {
     id: "project-19",
-    src: "/src/assets/imagery/IMG_8503.jpg",
+    src: "/imagery/IMG_8503.jpg",
     alt: "Project 19",
     title: "Project Nineteen",
     category: "Photography",
@@ -184,7 +184,7 @@ export const portfolioItems: GridItem[] = [
   },
   {
     id: "project-20",
-    src: "/src/assets/imagery/IMG_8794.JPG",
+    src: "/imagery/IMG_8794.JPG",
     alt: "Project 20",
     title: "Project Twenty",
     category: "Photography",
