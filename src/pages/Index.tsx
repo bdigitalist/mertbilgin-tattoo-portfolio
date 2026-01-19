@@ -3,18 +3,18 @@ import { WebGLCanvas } from '@/components/WebGLGrid/WebGLCanvas';
 import { HUDHeader } from '@/components/HUD/HUDHeader';
 import { FooterTitle } from '@/components/HUD/FooterTitle';
 import { InfoPanel } from '@/components/HUD/InfoPanel';
-import { CRTOverlay } from '@/components/Effects/CRTOverlay';
 import { ProgressiveBlur } from '@/components/Effects/ProgressiveBlur';
 import { CustomCursor } from '@/components/Effects/CustomCursor';
 import { Preloader } from '@/components/Preloader/Preloader';
 import { Lightbox } from '@/components/Lightbox/Lightbox';
 import { useGridStore } from '@/store/useGridStore';
 import { useIsTouchDevice } from '@/hooks/useIsTouchDevice';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { GridItem } from '@/data/portfolioData';
 
 const Index = () => {
   const isTouchDevice = useIsTouchDevice();
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 900;
+  const isMobile = useIsMobile();
   const { setSelectedItem, isPreloaderComplete } = useGridStore();
   
   const handleItemClick = useCallback((item: GridItem) => {
@@ -25,9 +25,9 @@ const Index = () => {
     <div className="relative min-h-screen overflow-hidden bg-background">
       {/* Preloader */}
       <Preloader />
-      
-      {/* WebGL Grid */}
-      <WebGLCanvas onItemClick={handleItemClick} />
+
+      {/* WebGL Grid - only render after preloader completes */}
+      {isPreloaderComplete && <WebGLCanvas onItemClick={handleItemClick} />}
       
       {/* Progressive blur edges */}
       <ProgressiveBlur position="top" />
@@ -40,12 +40,10 @@ const Index = () => {
       {/* Info panel (desktop only) */}
       {!isMobile && <InfoPanel />}
       
-      {/* CRT overlay effect */}
-      <CRTOverlay />
       
       {/* Custom cursor (desktop only) */}
       {!isTouchDevice && <CustomCursor />}
-      
+
       {/* Lightbox modal */}
       <Lightbox />
     </div>

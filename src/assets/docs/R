@@ -1,0 +1,903 @@
+# Differential-Velocity Masonry Grid
+
+## A Technical Deep-Dive into Multi-Speed Column Scrolling
+
+---
+
+## 1. What Is This Effect?
+
+This UI pattern creates a **masonry-style grid where each column scrolls at a different speed** relative to user input. Unlike traditional parallax (which typically involves background/foreground layers moving at different speeds on the Z-axis), this effect applies **velocity differentials on the Y-axis across adjacent columns**.
+
+### The Visual Result
+- On initial load, grid cells appear relatively aligned
+- As the user scrolls or drags, columns begin to "drift" relative to each other
+- The grid progressively becomes more staggered/offset
+- Creates a dynamic, living composition that responds organically to interaction
+
+### UX Purpose
+- **Visual interest**: Breaks the monotony of static grid layouts
+- **Depth perception**: Simulates a pseudo-3D effect without actual 3D rendering
+- **Engagement**: Encourages exploration through satisfying motion feedback
+- **Portfolio showcase**: Keeps the eye moving, revealing content progressively
+
+---
+
+## 2. Anatomy of the Interface
+
+Based on the reference screenshots, the interface consists of several distinct layers:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  FIXED HUD LAYER (z-index: highest)                        │
+│  ┌──────────┬─────────────┬──────────────┬───────────────┐ │
+│  │ Location │  Expertise  │   Socials    │  Nav Buttons  │ │
+│  │ + Time   │  List       │   Links      │  Archive/etc  │ │
+│  └──────────┴─────────────┴──────────────┴───────────────┘ │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  SCROLLABLE GRID LAYER                                      │
+│  ┌─────────────┬─────────────┬─────────────┐               │
+│  │  COLUMN A   │  COLUMN B   │  COLUMN C   │               │
+│  │  speed: 0.7 │  speed: 1.0 │  speed: 1.3 │               │
+│  │      ↓      │      ↓      │      ↓      │               │
+│  │   [img]     │   [img]     │   [img]     │               │
+│  │   [img]     │   [img]     │   [img]     │               │
+│  │   [txt]     │   [img]     │   [img]     │               │
+│  │   [img]     │   [txt]     │   [img]     │               │
+│  │     ∞       │     ∞       │     ∞       │               │
+│  └─────────────┴─────────────┴─────────────┘               │
+│                                                             │
+├─────────────────────────────────────────────────────────────┤
+│  FIXED FOOTER LAYER                                         │
+│  ┌─────────────────────────────────────────────────────────┐│
+│  │ Brand Logo               Progress Bar        CTA Button ││
+│  └─────────────────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 3. Core Mechanics Explained
+
+### 3.1 Scroll Input Capture
+
+The system captures scroll/drag input but **does not use native browser scrolling**. Instead:
+
+```javascript
+// Pseudocode: Input capture
+let scrollAccumulator = 0;
+
+canvas.addEventListener('wheel', (e) => {
+  e.preventDefault(); // Hijack native scroll
+  scrollAccumulator += e.deltaY * sensitivity;
+});
+
+// For touch/drag:
+canvas.addEventListener('pointermove', (e) => {
+  if (isDragging) {
+    scrollAccumulator += (e.clientY - lastY) * dragSensitivity;
+    lastY = e.clientY;
+  }
+});
+```
+
+**Why hijack scroll?** Native scroll applies uniformly to all content. By capturing the delta ourselves, we can redistribute it differently per column.
+
+---
+
+### 3.2 Velocity Multipliers Per Column
+
+Each column has an assigned **velocity multiplier** that determines how much it moves relative to the raw scroll input:
+
+```javascript
+const columns = [
+  { id: 'left',   velocityMultiplier: 0.7,  currentOffset: 0 },
+  { id: 'center', velocityMultiplier: 1.0,  currentOffset: 0 },
+  { id: 'right',  velocityMultiplier: 1.3,  currentOffset: 0 },
+];
+```
+
+**The Math:**
+```
+newOffset = currentOffset + (scrollDelta × velocityMultiplier)
+```
+
+| Scroll Delta | Left (0.7x) | Center (1.0x) | Right (1.3x) |
+|--------------|-------------|---------------|--------------|
+| +100px       | +70px       | +100px        | +130px       |
+| +500px       | +350px      | +500px        | +650px       |
+| +1000px      | +700px      | +1000px       | +1300px      |
+
+After 1000px of scrolling, the left column is **600px behind** the right column—this is the "drift" that creates the staggered effect.
+
+---
+
+### 3.3 Applying the Transform
+
+Each column's offset is applied via CSS transforms (GPU-accelerated):
+
+```javascript
+function updateColumnPositions() {
+  columns.forEach((col, index) => {
+    // Update offset based on scroll
+    col.currentOffset += scrollDelta * col.velocityMultiplier;
+    
+    // Apply transform to DOM element
+    const columnEl = document.querySelector(`[data-column="${index}"]`);
+    columnEl.style.transform = `translateY(${-col.currentOffset}px)`;
+  });
+  
+  scrollDelta = 0; // Reset for next frame
+}
+
+// Run on animation frame for smooth updates
+function animate() {
+  updateColumnPositions();
+  requestAnimationFrame(animate);
+}
+```
+
+**Note the negative sign**: `translateY(-offset)` because scrolling "down" should move content "up".
+
+---
+
+### 3.4 Infinite Scroll / Content Wrapping
+
+For a true infinite canvas, items that scroll out of view must **wrap around** to the opposite edge:
+
+```javascript
+function wrapItems(column) {
+  const items = column.querySelectorAll('.grid-item');
+  const columnHeight = calculateTotalColumnHeight(items);
+  
+  items.forEach(item => {
+    const itemTop = item.offsetTop - column.currentOffset;
+    const itemBottom = itemTop + item.offsetHeight;
+    
+    // If item has scrolled completely above viewport
+    if (itemBottom < -buffer) {
+      // Move it to the bottom
+      item.style.transform = `translateY(${columnHeight}px)`;
+    }
+    
+    // If item has scrolled completely below viewport
+    if (itemTop > viewportHeight + buffer) {
+      // Move it to the top
+      item.style.transform = `translateY(-${columnHeight}px)`;
+    }
+  });
+}
+```
+
+**Alternative approach**: Virtual scrolling where you only render visible items and recycle DOM nodes (more performant for large datasets).
+
+---
+
+### 3.5 Inertia / Momentum
+
+For natural-feeling interaction, scroll should continue with **deceleration** after the user stops:
+
+```javascript
+let velocity = 0;
+const friction = 0.95; // Decay rate (0.9-0.98 typical)
+
+function handleScrollInput(delta) {
+  velocity += delta * acceleration;
+}
+
+function animate() {
+  // Apply velocity to scroll accumulator
+  scrollAccumulator += velocity;
+  
+  // Decay velocity (friction)
+  velocity *= friction;
+  
+  // Stop when velocity is negligible
+  if (Math.abs(velocity) < 0.1) {
+    velocity = 0;
+  }
+  
+  updateColumnPositions();
+  requestAnimationFrame(animate);
+}
+```
+
+**Tuning parameters:**
+- `friction: 0.92` = Quick stop, responsive feel
+- `friction: 0.98` = Long glide, smooth/floaty feel
+- `acceleration: 0.5` = Less sensitive to input
+- `acceleration: 1.5` = More sensitive, snappy response
+
+---
+
+## 4. Implementation Approaches
+
+### 4.1 Vanilla JavaScript + CSS
+
+**Pros**: No dependencies, full control, lightweight
+**Cons**: More boilerplate, manual optimization
+
+```html
+<div class="grid-container">
+  <div class="column" data-velocity="0.7">
+    <div class="cell"><img src="..." /></div>
+    <div class="cell"><img src="..." /></div>
+  </div>
+  <div class="column" data-velocity="1.0">
+    <div class="cell"><img src="..." /></div>
+    <div class="cell text-cell"><p>...</p></div>
+  </div>
+  <div class="column" data-velocity="1.3">
+    <div class="cell"><img src="..." /></div>
+    <div class="cell"><img src="..." /></div>
+  </div>
+</div>
+```
+
+```css
+.grid-container {
+  display: flex;
+  overflow: hidden;
+  height: 100vh;
+}
+
+.column {
+  flex: 1;
+  will-change: transform; /* GPU hint */
+}
+
+.cell {
+  width: 100%;
+  padding: 8px;
+}
+```
+
+---
+
+### 4.2 GSAP (GreenSock Animation Platform)
+
+**Pros**: Buttery smooth, excellent easing, battle-tested
+**Cons**: Library dependency (~60kb)
+
+```javascript
+import gsap from 'gsap';
+
+const columns = document.querySelectorAll('.column');
+const velocities = [0.7, 1.0, 1.3];
+let scrollY = 0;
+
+window.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  scrollY += e.deltaY;
+  
+  columns.forEach((col, i) => {
+    gsap.to(col, {
+      y: -scrollY * velocities[i],
+      duration: 0.6,
+      ease: 'power2.out',
+      overwrite: true
+    });
+  });
+});
+```
+
+---
+
+### 4.3 React + Framer Motion
+
+**Pros**: Declarative, integrates with React ecosystem
+**Cons**: React-specific, bundle size
+
+```jsx
+import { motion, useScroll, useTransform } from 'framer-motion';
+
+function DifferentialGrid({ items }) {
+  const { scrollY } = useScroll();
+  
+  const leftY = useTransform(scrollY, [0, 1000], [0, -700]);
+  const centerY = useTransform(scrollY, [0, 1000], [0, -1000]);
+  const rightY = useTransform(scrollY, [0, 1000], [0, -1300]);
+  
+  return (
+    <div className="grid-container">
+      <motion.div className="column" style={{ y: leftY }}>
+        {items.left.map(item => <Cell key={item.id} {...item} />)}
+      </motion.div>
+      <motion.div className="column" style={{ y: centerY }}>
+        {items.center.map(item => <Cell key={item.id} {...item} />)}
+      </motion.div>
+      <motion.div className="column" style={{ y: rightY }}>
+        {items.right.map(item => <Cell key={item.id} {...item} />)}
+      </motion.div>
+    </div>
+  );
+}
+```
+
+---
+
+### 4.4 React Three Fiber (3D Context)
+
+For projects already using WebGL/Three.js, you can implement this as **planes in 3D space**:
+
+```jsx
+function GridColumn({ items, velocityMultiplier, xPosition }) {
+  const groupRef = useRef();
+  const scrollOffset = useScrollStore(state => state.offset);
+  
+  useFrame(() => {
+    groupRef.current.position.y = -scrollOffset * velocityMultiplier;
+  });
+  
+  return (
+    <group ref={groupRef} position={[xPosition, 0, 0]}>
+      {items.map((item, i) => (
+        <ImagePlane 
+          key={item.id}
+          position={[0, -i * cellHeight, 0]}
+          texture={item.texture}
+        />
+      ))}
+    </group>
+  );
+}
+```
+
+---
+
+## 5. Mixed Content: Images + Text Blocks
+
+The reference design includes **text manifesto blocks** as grid items alongside images:
+
+```jsx
+// Cell type enumeration
+const CELL_TYPES = {
+  IMAGE: 'image',
+  TEXT: 'text',
+  VIDEO: 'video',
+  EMBED: 'embed'
+};
+
+// Cell component with type switching
+function GridCell({ type, content }) {
+  switch (type) {
+    case CELL_TYPES.IMAGE:
+      return (
+        <div className="cell cell--image">
+          <img src={content.src} alt={content.alt} />
+          <div className="cell__overlay">
+            <span className="cell__year">{content.year}</span>
+            <span className="cell__category">{content.category}</span>
+          </div>
+        </div>
+      );
+    
+    case CELL_TYPES.TEXT:
+      return (
+        <div className="cell cell--text">
+          <p className="manifesto-text">{content.text}</p>
+        </div>
+      );
+    
+    default:
+      return null;
+  }
+}
+```
+
+### Text Block Styling (Reference Analysis)
+
+The text blocks in the reference use:
+- **Mixed typography**: Alternating distressed/glitch font with clean sans-serif
+- **High contrast**: Dark text on light/cream background
+- **Generous padding**: Text doesn't touch edges
+- **Uppercase treatment**: All caps for emphasis
+
+```css
+.cell--text {
+  background: #e8e4df; /* Warm off-white */
+  padding: 2rem;
+  display: flex;
+  align-items: center;
+}
+
+.manifesto-text {
+  font-size: clamp(1.2rem, 3vw, 2rem);
+  line-height: 1.2;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+/* Alternating word styling */
+.manifesto-text .distressed {
+  font-family: 'Damaged', 'Impact', sans-serif;
+  letter-spacing: -0.02em;
+}
+
+.manifesto-text .clean {
+  font-family: 'Helvetica Neue', sans-serif;
+  letter-spacing: 0.02em;
+}
+```
+
+---
+
+## 6. The Fixed HUD Layer
+
+The HUD (Heads-Up Display) remains **static** while the grid scrolls beneath it:
+
+```css
+.hud {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none; /* Allow clicks through to grid */
+  z-index: 100;
+}
+
+.hud__element {
+  pointer-events: auto; /* Re-enable for interactive elements */
+}
+
+.hud__top-left {
+  position: absolute;
+  top: 1.5rem;
+  left: 1.5rem;
+}
+
+.hud__top-right {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+}
+
+.hud__bottom {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 1.5rem;
+  right: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+```
+
+### HUD Elements from Reference:
+1. **Top-left**: Location + live clock ("BASED IN ITALY, WORKING GLOBALLY. 00:07:32 CET")
+2. **Top-left-ish**: Expertise list (Art Direction, Web Design + Dev, Webflow)
+3. **Top-center-left**: Social links (Awwwards, LinkedIn, Contacts)
+4. **Top-center**: Tagline/bio
+5. **Top-right**: Navigation buttons (THE ARCHIVE, THE PROFILE)
+6. **Bottom-left**: Brand wordmark ("THE ARTBOARD™")
+7. **Bottom-center**: Progress indicator bar
+8. **Bottom-right**: CTA ("SCROLL OR CLICK")
+
+---
+
+## 7. Scroll Progress Indicator
+
+The thin progress bar at the bottom indicates position within the infinite scroll:
+
+```javascript
+function updateProgressBar() {
+  // For infinite scroll, use modular position
+  const totalHeight = getTotalContentHeight();
+  const normalizedPosition = (scrollAccumulator % totalHeight) / totalHeight;
+  
+  progressBar.style.transform = `scaleX(${normalizedPosition})`;
+}
+
+// Alternative: segment-based for finite content
+function updateSegmentProgress() {
+  const currentSection = Math.floor(scrollAccumulator / sectionHeight);
+  const sectionProgress = (scrollAccumulator % sectionHeight) / sectionHeight;
+  
+  // Update both segment indicator and continuous bar
+  segmentDots[currentSection].classList.add('active');
+  progressFill.style.width = `${sectionProgress * 100}%`;
+}
+```
+
+---
+
+## 8. Bidirectional Scrolling Consideration
+
+The reference appears to support **vertical scrolling only**, but the architecture can extend to bidirectional (X + Y) panning:
+
+```javascript
+// 2D velocity mapping
+const columns = [
+  { velocityX: 1.0, velocityY: 0.7 },
+  { velocityX: 1.0, velocityY: 1.0 },
+  { velocityX: 1.0, velocityY: 1.3 },
+];
+
+function handleInput(deltaX, deltaY) {
+  columns.forEach((col, i) => {
+    col.offsetX += deltaX * col.velocityX;
+    col.offsetY += deltaY * col.velocityY;
+    
+    applyTransform(columnElements[i], col.offsetX, col.offsetY);
+  });
+}
+
+function applyTransform(el, x, y) {
+  el.style.transform = `translate(${-x}px, ${-y}px)`;
+}
+```
+
+---
+
+## 9. Performance Optimization
+
+### 9.1 GPU Acceleration
+```css
+.column {
+  will-change: transform;
+  transform: translateZ(0); /* Force GPU layer */
+}
+```
+
+### 9.2 Passive Event Listeners
+```javascript
+// For scroll events that don't need preventDefault
+element.addEventListener('scroll', handler, { passive: true });
+
+// For wheel events where you DO need preventDefault
+element.addEventListener('wheel', handler, { passive: false });
+```
+
+### 9.3 Debounced Resize Handling
+```javascript
+let resizeTimeout;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimeout);
+  resizeTimeout = setTimeout(() => {
+    recalculateLayout();
+  }, 150);
+});
+```
+
+### 9.4 Intersection Observer for Lazy Loading
+```javascript
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const img = entry.target;
+      img.src = img.dataset.src; // Load actual image
+      observer.unobserve(img);
+    }
+  });
+}, {
+  rootMargin: '200px' // Pre-load slightly before visible
+});
+
+document.querySelectorAll('.cell img[data-src]').forEach(img => {
+  observer.observe(img);
+});
+```
+
+---
+
+## 10. Accessibility Considerations
+
+### 10.1 Reduced Motion Support
+```javascript
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const velocities = prefersReducedMotion 
+  ? [1.0, 1.0, 1.0]  // Uniform scroll, no differential
+  : [0.7, 1.0, 1.3]; // Full effect
+```
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  .column {
+    transition: none !important;
+  }
+}
+```
+
+### 10.2 Keyboard Navigation
+```javascript
+document.addEventListener('keydown', (e) => {
+  switch(e.key) {
+    case 'ArrowDown':
+    case ' ': // Spacebar
+      scrollBy(100);
+      break;
+    case 'ArrowUp':
+      scrollBy(-100);
+      break;
+    case 'Home':
+      scrollTo(0);
+      break;
+    case 'End':
+      scrollTo(maxScroll);
+      break;
+  }
+});
+```
+
+### 10.3 Focus Management
+```javascript
+// Ensure grid items are keyboard-accessible
+document.querySelectorAll('.cell').forEach((cell, index) => {
+  cell.setAttribute('tabindex', '0');
+  cell.setAttribute('role', 'article');
+  cell.setAttribute('aria-label', `Grid item ${index + 1}`);
+});
+```
+
+---
+
+## 11. Mobile / Touch Adaptations
+
+### 11.1 Touch Event Handling
+```javascript
+let touchStartY = 0;
+let touchCurrentY = 0;
+
+element.addEventListener('touchstart', (e) => {
+  touchStartY = e.touches[0].clientY;
+  velocity = 0; // Kill momentum on new touch
+}, { passive: true });
+
+element.addEventListener('touchmove', (e) => {
+  touchCurrentY = e.touches[0].clientY;
+  const delta = touchStartY - touchCurrentY;
+  handleScrollInput(delta);
+  touchStartY = touchCurrentY;
+}, { passive: false });
+
+element.addEventListener('touchend', () => {
+  // Inertia continues from last velocity
+});
+```
+
+### 11.2 Responsive Velocity Adjustments
+```javascript
+function getVelocities() {
+  const isMobile = window.innerWidth < 768;
+  
+  return isMobile
+    ? [0.85, 1.0, 1.15]  // Subtle effect on mobile
+    : [0.7, 1.0, 1.3];   // Full effect on desktop
+}
+```
+
+### 11.3 Column Count Reduction
+```css
+.grid-container {
+  display: flex;
+}
+
+@media (max-width: 1024px) {
+  .column:nth-child(3) {
+    display: none; /* Hide third column on tablet */
+  }
+}
+
+@media (max-width: 640px) {
+  .column:nth-child(2) {
+    display: none; /* Single column on mobile */
+  }
+}
+```
+
+---
+
+## 12. Complete Minimal Implementation
+
+Here's a working starting point combining all concepts:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Differential Velocity Grid</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      overflow: hidden;
+      background: #0a0a0a;
+      font-family: system-ui, sans-serif;
+    }
+    
+    .grid-container {
+      display: flex;
+      height: 100vh;
+      gap: 8px;
+      padding: 8px;
+    }
+    
+    .column {
+      flex: 1;
+      will-change: transform;
+    }
+    
+    .cell {
+      width: 100%;
+      margin-bottom: 8px;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    
+    .cell img {
+      width: 100%;
+      height: auto;
+      display: block;
+      filter: grayscale(100%);
+      transition: filter 0.3s ease;
+    }
+    
+    .cell:hover img {
+      filter: grayscale(0%);
+    }
+    
+    .cell--text {
+      background: #e8e4df;
+      padding: 2rem;
+      color: #1a1a1a;
+      font-size: 1.5rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      line-height: 1.2;
+    }
+    
+    .hud {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      z-index: 100;
+      color: white;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    
+    .hud__brand {
+      position: absolute;
+      bottom: 1.5rem;
+      left: 1.5rem;
+      font-size: 1.5rem;
+      font-weight: 900;
+    }
+    
+    .hud__cta {
+      position: absolute;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      pointer-events: auto;
+      padding: 0.5rem 1rem;
+      border: 1px solid rgba(255,255,255,0.3);
+      background: transparent;
+      color: white;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="hud">
+    <div class="hud__brand">THE GRID™</div>
+    <button class="hud__cta">SCROLL OR DRAG</button>
+  </div>
+  
+  <div class="grid-container">
+    <div class="column" data-velocity="0.7"></div>
+    <div class="column" data-velocity="1.0"></div>
+    <div class="column" data-velocity="1.3"></div>
+  </div>
+
+  <script>
+    // Configuration
+    const CONFIG = {
+      friction: 0.95,
+      sensitivity: 1,
+      dragSensitivity: 1.5
+    };
+    
+    // State
+    let velocity = 0;
+    let isDragging = false;
+    let lastY = 0;
+    const columns = [];
+    
+    // Initialize columns
+    document.querySelectorAll('.column').forEach((el, i) => {
+      columns.push({
+        element: el,
+        velocity: parseFloat(el.dataset.velocity),
+        offset: 0
+      });
+      
+      // Populate with placeholder content
+      for (let j = 0; j < 10; j++) {
+        const cell = document.createElement('div');
+        cell.className = j % 4 === 0 && i === 1 ? 'cell cell--text' : 'cell';
+        
+        if (cell.classList.contains('cell--text')) {
+          cell.textContent = 'A surface where content can breathe.';
+        } else {
+          const img = document.createElement('img');
+          img.src = `https://picsum.photos/400/${300 + Math.floor(Math.random() * 200)}?random=${i}-${j}`;
+          cell.appendChild(img);
+        }
+        
+        el.appendChild(cell);
+      }
+    });
+    
+    // Event Listeners
+    window.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      velocity += e.deltaY * CONFIG.sensitivity;
+    }, { passive: false });
+    
+    window.addEventListener('pointerdown', (e) => {
+      isDragging = true;
+      lastY = e.clientY;
+      velocity = 0;
+    });
+    
+    window.addEventListener('pointermove', (e) => {
+      if (!isDragging) return;
+      const delta = lastY - e.clientY;
+      velocity += delta * CONFIG.dragSensitivity;
+      lastY = e.clientY;
+    });
+    
+    window.addEventListener('pointerup', () => {
+      isDragging = false;
+    });
+    
+    // Animation Loop
+    function animate() {
+      // Apply friction
+      velocity *= CONFIG.friction;
+      
+      // Update columns
+      columns.forEach(col => {
+        col.offset += velocity * col.velocity * 0.1;
+        col.element.style.transform = `translateY(${-col.offset}px)`;
+      });
+      
+      // Stop when negligible
+      if (Math.abs(velocity) < 0.01) velocity = 0;
+      
+      requestAnimationFrame(animate);
+    }
+    
+    animate();
+  </script>
+</body>
+</html>
+```
+
+---
+
+## 13. Summary
+
+| Concept | Description |
+|---------|-------------|
+| **Differential Velocity** | Each column moves at a different speed relative to scroll input |
+| **Scroll Hijacking** | Native scroll is intercepted; deltas are redistributed manually |
+| **Inertia/Momentum** | Velocity decays over time for natural feel |
+| **Infinite Wrapping** | Items exiting viewport re-enter from opposite edge |
+| **Fixed HUD** | UI overlay remains static while content scrolls |
+| **Mixed Content** | Images and text blocks coexist as grid items |
+| **GPU Acceleration** | `will-change` and `transform` for 60fps performance |
+
+This pattern creates an engaging, premium-feeling portfolio or gallery experience that feels distinctly different from standard web scrolling while remaining performant and accessible.
+
+---
+
+*Document created as a technical reference for implementing differential-velocity masonry grids in web applications.*

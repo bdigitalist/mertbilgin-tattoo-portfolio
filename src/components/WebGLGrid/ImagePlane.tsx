@@ -1,7 +1,7 @@
-import { useRef, useEffect, useState, forwardRef } from 'react';
+import { useRef, forwardRef, useState, useEffect } from 'react';
+import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { GridItem } from '@/data/portfolioData';
-import { useGridStore } from '@/store/useGridStore';
 
 interface ImagePlaneProps {
   item: GridItem;
@@ -11,74 +11,140 @@ interface ImagePlaneProps {
   onClick: () => void;
 }
 
-// Shared geometry for all planes
-const sharedGeometry = new THREE.PlaneGeometry(1, 1);
-
-// Texture cache and loader
+// Texture cache
 const textureCache = new Map<string, THREE.Texture>();
-const textureLoader = new THREE.TextureLoader();
+const loadingTextures = new Set<string>();
 
-const getTexture = (src: string): THREE.Texture => {
-  if (textureCache.has(src)) {
-    return textureCache.get(src)!;
+// Create texture loader with CORS
+const textureLoader = new THREE.TextureLoader();
+textureLoader.crossOrigin = 'anonymous';
+
+// Custom shader for grayscale effect
+const vertexShader = `
+  varying vec2 vUv;
+  void main() {
+    vUv = uv;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
   }
-  
-  // Create a placeholder while loading
-  const texture = textureLoader.load(src, (loadedTexture) => {
-    loadedTexture.minFilter = THREE.LinearFilter;
-    loadedTexture.magFilter = THREE.LinearFilter;
-    loadedTexture.colorSpace = THREE.SRGBColorSpace;
-    loadedTexture.needsUpdate = true;
-  });
-  
-  texture.minFilter = THREE.LinearFilter;
-  texture.magFilter = THREE.LinearFilter;
-  texture.colorSpace = THREE.SRGBColorSpace;
-  
-  textureCache.set(src, texture);
-  return texture;
-};
+`;
+
+const fragmentShader = `
+  uniform sampler2D uTexture;
+  uniform float uGrayscale;
+  uniform vec3 uColor;
+  varying vec2 vUv;
+
+  void main() {
+    vec4 texColor = texture2D(uTexture, vUv);
+
+    // Calculate grayscale using luminance weights
+    float gray = dot(texColor.rgb, vec3(0.299, 0.587, 0.114));
+    vec3 grayscaleColor = vec3(gray);
+
+    // Mix between grayscale and original color
+    vec3 finalColor = mix(texColor.rgb, grayscaleColor, uGrayscale);
+
+    // Apply brightness multiplier
+    finalColor *= uColor;
+
+    gl_FragColor = vec4(finalColor, texColor.a);
+  }
+`;
 
 export const ImagePlane = forwardRef<THREE.Mesh, ImagePlaneProps>(
   ({ item, position, width, height, onClick }, ref) => {
     const meshRef = useRef<THREE.Mesh>(null);
-    const materialRef = useRef<THREE.MeshBasicMaterial>(null);
-    const addLoadedImage = useGridStore((state) => state.addLoadedImage);
-    
-    // Get or load texture
-    const texture = getTexture(item.src);
-    
+    const materialRef = useRef<THREE.ShaderMaterial>(null);
+    const [texture, setTexture] = useState<THREE.Texture | null>(null);
+    const [isHovered, setIsHovered] = useState(false);
+    const grayscaleRef = useRef(1); // Start grayscale
+
     useEffect(() => {
-      addLoadedImage(item.src);
-    }, [item.src, addLoadedImage]);
-    
+      // Check cache first
+      if (textureCache.has(item.src)) {
+        setTexture(textureCache.get(item.src)!);
+        return;
+      }
+
+      // Prevent duplicate loads
+      if (loadingTextures.has(item.src)) {
+        return;
+      }
+
+      loadingTextures.add(item.src);
+
+      textureLoader.load(
+        item.src,
+        (loadedTexture) => {
+          loadedTexture.minFilter = THREE.LinearFilter;
+          loadedTexture.magFilter = THREE.LinearFilter;
+          loadedTexture.colorSpace = THREE.SRGBColorSpace;
+          textureCache.set(item.src, loadedTexture);
+          loadingTextures.delete(item.src);
+          setTexture(loadedTexture);
+        },
+        undefined,
+        (error) => {
+          console.warn('Failed to load:', item.src);
+          loadingTextures.delete(item.src);
+        }
+      );
+    }, [item.src]);
+
+    // Animate grayscale transition
+    useFrame((_, delta) => {
+      if (materialRef.current) {
+        const target = isHovered ? 0 : 1;
+        const speed = 4; // Transition speed
+        grayscaleRef.current += (target - grayscaleRef.current) * speed * delta;
+        materialRef.current.uniforms.uGrayscale.value = grayscaleRef.current;
+
+        // Slight brightness boost on hover
+        const brightness = isHovered ? 1.1 : 1.0;
+        materialRef.current.uniforms.uColor.value.setScalar(
+          1 + (brightness - 1) * (1 - grayscaleRef.current)
+        );
+      }
+    });
+
+    // Create placeholder texture for loading state
+    const placeholderTexture = useRef(
+      new THREE.DataTexture(
+        new Uint8Array([58, 58, 74, 255]),
+        1,
+        1,
+        THREE.RGBAFormat
+      )
+    ).current;
+
     return (
       <mesh
         ref={ref || meshRef}
         position={position}
         scale={[width, height, 1]}
-        geometry={sharedGeometry}
         onClick={(e) => {
           e.stopPropagation();
           onClick();
         }}
         onPointerOver={() => {
-          if (materialRef.current) {
-            materialRef.current.color.setRGB(1.2, 1.2, 1.2);
-          }
+          setIsHovered(true);
           document.body.style.cursor = 'pointer';
         }}
         onPointerOut={() => {
-          if (materialRef.current) {
-            materialRef.current.color.setRGB(1, 1, 1);
-          }
+          setIsHovered(false);
           document.body.style.cursor = 'none';
         }}
       >
-        <meshBasicMaterial
+        <planeGeometry args={[1, 1]} />
+        <shaderMaterial
           ref={materialRef}
-          map={texture}
-          toneMapped={false}
+          vertexShader={vertexShader}
+          fragmentShader={fragmentShader}
+          uniforms={{
+            uTexture: { value: texture || placeholderTexture },
+            uGrayscale: { value: 1 },
+            uColor: { value: new THREE.Color(1, 1, 1) },
+          }}
         />
       </mesh>
     );

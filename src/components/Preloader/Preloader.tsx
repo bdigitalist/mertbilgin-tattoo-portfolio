@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useGridStore } from '@/store/useGridStore';
 import { portfolioItems } from '@/data/portfolioData';
+import { preloadAllTextures } from '@/utils/textureLoader';
 import gsap from 'gsap';
 
 const INTRO_TEXT = "WHAT APPEARS HERE IS NOT A SHOWCASE, BUT THE TRACE OF A PRACTICE";
@@ -10,31 +11,24 @@ export const Preloader = () => {
   const [count, setCount] = useState(0);
   const [showText, setShowText] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
-  
+  const [texturesReady, setTexturesReady] = useState(false);
+
   const containerRef = useRef<HTMLDivElement>(null);
   const thumbnailRef = useRef<HTMLDivElement>(null);
-  
-  // Simulate loading progress (faster for demo)
+
+  // Actually preload all textures
   useEffect(() => {
-    let current = 0;
-    const interval = setInterval(() => {
-      current += Math.random() * 15 + 5;
-      if (current >= 100) {
-        current = 100;
-        clearInterval(interval);
-        setCount(100);
-      } else {
-        setCount(Math.floor(current));
-      }
-    }, 100);
-    
-    return () => clearInterval(interval);
+    preloadAllTextures((progress) => {
+      setCount(progress);
+    }).then(() => {
+      setTexturesReady(true);
+    });
   }, []);
   
-  // Animation timeline when count reaches 100
+  // Animation timeline when textures are loaded
   useEffect(() => {
-    if (count < 100) return;
-    
+    if (!texturesReady) return;
+
     const tl = gsap.timeline({
       onComplete: () => {
         setIsExiting(true);
@@ -56,8 +50,8 @@ export const Preloader = () => {
     
     // Wait then exit
     tl.to({}, { duration: 1 });
-    
-  }, [count, setPreloaderComplete]);
+
+  }, [texturesReady, setPreloaderComplete]);
   
   // Exit animation
   useEffect(() => {

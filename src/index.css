@@ -3,7 +3,6 @@
 @tailwind utilities;
 
 /* THE ARTBOARD - Design System
-   A retro-futuristic CRT aesthetic with dark theme
    All colors in HSL
 */
 
@@ -47,9 +46,7 @@
     /* Custom properties for The Artboard */
     --grid-gap: 4px;
     --hud-padding: 24px;
-    --crt-scanline-opacity: 0.08;
-    --crt-vignette-opacity: 0.4;
-    --blur-amount: 3rem;
+    --blur-amount: 4rem;
   }
 
   /* No light mode - this is a dark-only design */
@@ -94,97 +91,34 @@
 }
 
 @layer components {
-  /* CRT Scanlines */
-  .crt-overlay {
-    pointer-events: none;
-    position: fixed;
-    inset: 0;
-    z-index: 100;
-  }
-
-  .crt-overlay::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: repeating-linear-gradient(
-      to bottom,
-      transparent 0px,
-      transparent 2px,
-      hsl(0 0% 0% / var(--crt-scanline-opacity)) 2px,
-      hsl(0 0% 0% / var(--crt-scanline-opacity)) 4px
-    );
-    pointer-events: none;
-  }
-
-  .crt-overlay::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(
-      circle at center,
-      transparent 40%,
-      hsl(0 0% 0% / var(--crt-vignette-opacity)) 100%
-    );
-    animation: crt-flicker 0.1s infinite;
-    pointer-events: none;
-  }
-
-  @keyframes crt-flicker {
-    0%, 100% { opacity: 0.97; }
-    50% { opacity: 0.94; }
-  }
-
-  /* Progressive blur panels */
+  /* Progressive blur - smooth gradient fade using CSS mask */
+  /* Note: backdrop-filter is expensive in Chrome. Using layered approach instead. */
   .progressive-blur {
-    --panel-height: calc(100% / 6);
     position: fixed;
     left: 0;
     right: 0;
-    height: 120px;
+    height: 236px;
     pointer-events: none;
     z-index: 40;
+    /* Removed backdrop-filter: blur(100px) - causes frame drops in Chrome */
+    background: linear-gradient(
+      to bottom,
+      hsl(var(--background)) 0%,
+      hsl(var(--background) / 0.85) 25%,
+      hsl(var(--background) / 0.6) 50%,
+      hsl(var(--background) / 0.3) 75%,
+      transparent 100%
+    );
+    /* Use will-change for GPU acceleration of the gradient only */
+    will-change: opacity;
   }
-
-  .progressive-blur-top {
-    top: 0;
-    mask-image: linear-gradient(to bottom, black, transparent);
-    -webkit-mask-image: linear-gradient(to bottom, black, transparent);
-  }
-
-  .progressive-blur-bottom {
-    bottom: 0;
-    mask-image: linear-gradient(to top, black, transparent);
-    -webkit-mask-image: linear-gradient(to top, black, transparent);
-  }
-
-  .progressive-blur-panel {
-    position: absolute;
-    left: 0;
-    right: 0;
-    height: var(--panel-height);
-  }
-
-  .progressive-blur-top .progressive-blur-panel:nth-child(1) { top: 0; backdrop-filter: blur(24px); }
-  .progressive-blur-top .progressive-blur-panel:nth-child(2) { top: var(--panel-height); backdrop-filter: blur(20px); }
-  .progressive-blur-top .progressive-blur-panel:nth-child(3) { top: calc(var(--panel-height) * 2); backdrop-filter: blur(16px); }
-  .progressive-blur-top .progressive-blur-panel:nth-child(4) { top: calc(var(--panel-height) * 3); backdrop-filter: blur(12px); }
-  .progressive-blur-top .progressive-blur-panel:nth-child(5) { top: calc(var(--panel-height) * 4); backdrop-filter: blur(8px); }
-  .progressive-blur-top .progressive-blur-panel:nth-child(6) { top: calc(var(--panel-height) * 5); backdrop-filter: blur(4px); }
-
-  .progressive-blur-bottom .progressive-blur-panel:nth-child(1) { bottom: 0; backdrop-filter: blur(24px); }
-  .progressive-blur-bottom .progressive-blur-panel:nth-child(2) { bottom: var(--panel-height); backdrop-filter: blur(20px); }
-  .progressive-blur-bottom .progressive-blur-panel:nth-child(3) { bottom: calc(var(--panel-height) * 2); backdrop-filter: blur(16px); }
-  .progressive-blur-bottom .progressive-blur-panel:nth-child(4) { bottom: calc(var(--panel-height) * 3); backdrop-filter: blur(12px); }
-  .progressive-blur-bottom .progressive-blur-panel:nth-child(5) { bottom: calc(var(--panel-height) * 4); backdrop-filter: blur(8px); }
-  .progressive-blur-bottom .progressive-blur-panel:nth-child(6) { bottom: calc(var(--panel-height) * 5); backdrop-filter: blur(4px); }
 
   /* Custom cursor */
   .custom-cursor {
     position: fixed;
     pointer-events: none;
     z-index: 200;
-    transform: translate(-50%, -50%);
-    transition: opacity 0.15s ease;
+    will-change: transform, opacity;
   }
 
   .custom-cursor-inner {
@@ -199,6 +133,7 @@
     letter-spacing: 0.1em;
     text-transform: uppercase;
     white-space: nowrap;
+    transform: translate(-50%, -50%);
   }
 
   /* Preloader */
@@ -333,9 +268,10 @@
     right: var(--hud-padding);
     bottom: 80px;
     width: 220px;
-    background: hsl(var(--card) / 0.9);
+    background: hsl(var(--card) / 0.95);
     border: 1px solid hsl(var(--border));
-    backdrop-filter: blur(12px);
+    /* Reduced blur for better Chrome performance */
+    backdrop-filter: blur(8px);
     z-index: 50;
   }
 
@@ -364,8 +300,9 @@
     position: fixed;
     inset: 0;
     z-index: 150;
-    background: hsl(var(--background) / 0.95);
-    backdrop-filter: blur(20px);
+    background: hsl(var(--background) / 0.97);
+    /* Reduced blur for better Chrome performance */
+    backdrop-filter: blur(10px);
     display: flex;
     align-items: center;
     justify-content: center;

@@ -1,6 +1,7 @@
 import { useGridStore } from '@/store/useGridStore';
 import { portfolioItems } from '@/data/portfolioData';
 import { X } from 'lucide-react';
+import { ScrambleText } from './ScrambleText';
 
 export const InfoPanel = () => {
   const { infoPanelOpen, setInfoPanelOpen, scrollX, scrollY, cellWidth, cellHeight, gap, columns } = useGridStore();
@@ -51,21 +52,17 @@ export const InfoPanel = () => {
       {/* Instructions */}
       <div className="p-4 space-y-3">
         <div className="flex flex-col gap-1">
-          <span className="hud-label text-[9px]">NAVIGATION</span>
-          <span className="text-[10px] text-muted-foreground">
-            SCROLL OR DRAG TO EXPLORE
-          </span>
-          <span className="text-[10px] text-muted-foreground">
-            CLICK IMAGE TO VIEW DETAILS
-          </span>
+          <ScrambleText text="NAVIGATION" className="hud-label text-[9px]" />
+          <ScrambleText text="SCROLL OR DRAG TO EXPLORE" className="text-[10px] text-muted-foreground" />
+          <ScrambleText text="CLICK IMAGE TO VIEW DETAILS" className="text-[10px] text-muted-foreground" />
         </div>
-        
+
         <button
           onClick={() => setInfoPanelOpen(false)}
-          className="w-full flex items-center justify-center gap-2 py-2 border border-border text-[10px] tracking-wider hover:bg-foreground hover:text-background transition-colors"
+          className="w-full flex items-center justify-center gap-2 py-2 border border-border text-[10px] tracking-wider hover:bg-foreground hover:text-background transition-colors group"
         >
           <X size={10} />
-          CLOSE
+          <ScrambleText text="CLOSE" className="" />
         </button>
       </div>
     </div>

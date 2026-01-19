@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 
 interface LiveClockProps {
   timezone?: string;
+  className?: string;
 }
 
-export const LiveClock = ({ timezone = 'CET' }: LiveClockProps) => {
+export const LiveClock = ({ timezone = 'CET', className }: LiveClockProps) => {
   const [time, setTime] = useState('');
   
   useEffect(() => {
@@ -23,7 +24,7 @@ export const LiveClock = ({ timezone = 'CET' }: LiveClockProps) => {
   }, []);
   
   return (
-    <span className="hud-value font-mono tabular-nums">
+    <span className={`hud-value font-mono tabular-nums ${className || ''}`}>
       {time} {timezone}
     </span>
   );

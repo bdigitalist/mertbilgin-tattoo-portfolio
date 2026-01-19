@@ -9,115 +9,187 @@ export interface GridItem {
   href?: string;
 }
 
-// Placeholder portfolio items - replace with your own projects
+// Portfolio items using local imagery
 export const portfolioItems: GridItem[] = [
   {
     id: "project-1",
-    src: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&q=80",
-    alt: "Abstract geometric shapes",
-    title: "Geometric Dreams",
-    category: "Brand Identity",
+    src: "/src/assets/imagery/1.PNG",
+    alt: "Project 1",
+    title: "Project One",
+    category: "Photography",
     year: "2024",
-    description: "A visual exploration of form and color for a tech startup."
+    description: "Visual exploration and creative direction."
   },
   {
     id: "project-2",
-    src: "https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?w=800&q=80",
-    alt: "Minimalist architecture",
-    title: "Urban Canvas",
-    category: "Web Design",
+    src: "/src/assets/imagery/2.PNG",
+    alt: "Project 2",
+    title: "Project Two",
+    category: "Art Direction",
     year: "2024",
-    description: "Immersive digital experience for an architectural studio."
+    description: "Brand identity and visual systems."
   },
   {
     id: "project-3",
-    src: "https://images.unsplash.com/photo-1634017839464-5c339bbe3f35?w=800&q=80",
-    alt: "Digital art piece",
-    title: "Neural Paths",
-    category: "Art Direction",
-    year: "2023",
-    description: "Generative art collection exploring AI aesthetics."
+    src: "/src/assets/imagery/DSCF0425.JPG",
+    alt: "Project 3",
+    title: "Project Three",
+    category: "Photography",
+    year: "2024",
+    description: "Documentary and editorial work."
   },
   {
     id: "project-4",
-    src: "https://images.unsplash.com/photo-1618172193763-c511deb635ca?w=800&q=80",
-    alt: "Typography design",
-    title: "Type Lab",
-    category: "Typography",
-    year: "2023",
-    description: "Experimental typeface design for print and digital."
+    src: "/src/assets/imagery/DSCF0503.JPG",
+    alt: "Project 4",
+    title: "Project Four",
+    category: "Photography",
+    year: "2024",
+    description: "Capturing moments and stories."
   },
   {
     id: "project-5",
-    src: "https://images.unsplash.com/photo-1633167606207-d840b5070fc2?w=800&q=80",
-    alt: "Motion graphics",
-    title: "Flow State",
-    category: "Motion",
+    src: "/src/assets/imagery/DSCF0516.JPG",
+    alt: "Project 5",
+    title: "Project Five",
+    category: "Photography",
     year: "2023",
-    description: "Animated brand identity for a meditation app."
+    description: "Light and composition study."
   },
   {
     id: "project-6",
-    src: "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=800&q=80",
-    alt: "Gradient artwork",
-    title: "Chromatic",
+    src: "/src/assets/imagery/DSCF0586.PNG",
+    alt: "Project 6",
+    title: "Project Six",
     category: "Digital Art",
     year: "2023",
-    description: "NFT collection featuring fluid gradients and forms."
+    description: "Digital manipulation and effects."
   },
   {
     id: "project-7",
-    src: "https://images.unsplash.com/photo-1635776062127-d379bfcba9f8?w=800&q=80",
-    alt: "3D render",
-    title: "Dimensions",
-    category: "3D Design",
-    year: "2022",
-    description: "Product visualization for a luxury watch brand."
+    src: "/src/assets/imagery/DSCF1070.JPG",
+    alt: "Project 7",
+    title: "Project Seven",
+    category: "Photography",
+    year: "2023",
+    description: "Portrait and lifestyle photography."
   },
   {
     id: "project-8",
-    src: "https://images.unsplash.com/photo-1618172193622-ae2d025f4032?w=800&q=80",
-    alt: "Abstract patterns",
-    title: "Pattern Play",
-    category: "Branding",
-    year: "2022",
-    description: "Visual identity system for a fashion label."
+    src: "/src/assets/imagery/DSCF1086.JPG",
+    alt: "Project 8",
+    title: "Project Eight",
+    category: "Photography",
+    year: "2023",
+    description: "Editorial and commercial work."
   },
   {
     id: "project-9",
-    src: "https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?w=800&q=80",
-    alt: "Neon lights",
-    title: "Neon Nights",
+    src: "/src/assets/imagery/DSCF1221.JPG",
+    alt: "Project 9",
+    title: "Project Nine",
     category: "Photography",
-    year: "2022",
-    description: "Editorial photography series in Tokyo."
+    year: "2023",
+    description: "Environmental portraits."
   },
   {
     id: "project-10",
-    src: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=800&q=80",
-    alt: "Retro gaming",
-    title: "Pixel Perfect",
-    category: "UI Design",
+    src: "/src/assets/imagery/DSCF1229.JPG",
+    alt: "Project 10",
+    title: "Project Ten",
+    category: "Photography",
     year: "2022",
-    description: "Retro-inspired interface for a gaming platform."
+    description: "Street and urban photography."
   },
   {
     id: "project-11",
-    src: "https://images.unsplash.com/photo-1557672172-298e090bd0f1?w=800&q=80",
-    alt: "Marble texture",
-    title: "Material World",
-    category: "Packaging",
-    year: "2021",
-    description: "Premium packaging design for skincare brand."
+    src: "/src/assets/imagery/DSCF1967.JPG",
+    alt: "Project 11",
+    title: "Project Eleven",
+    category: "Photography",
+    year: "2022",
+    description: "Travel and exploration."
   },
   {
     id: "project-12",
-    src: "https://images.unsplash.com/photo-1618172193763-c511deb635ca?w=800&q=80",
-    alt: "Typography experiment",
-    title: "Letter Forms",
-    category: "Typography",
+    src: "/src/assets/imagery/DSCF2277.JPG",
+    alt: "Project 12",
+    title: "Project Twelve",
+    category: "Photography",
+    year: "2022",
+    description: "Nature and landscape work."
+  },
+  {
+    id: "project-13",
+    src: "/src/assets/imagery/DSCF9517.jpg",
+    alt: "Project 13",
+    title: "Project Thirteen",
+    category: "Photography",
+    year: "2022",
+    description: "Intimate moments captured."
+  },
+  {
+    id: "project-14",
+    src: "/src/assets/imagery/DSCF9941 2.JPG",
+    alt: "Project 14",
+    title: "Project Fourteen",
+    category: "Photography",
+    year: "2022",
+    description: "Personal projects and studies."
+  },
+  {
+    id: "project-15",
+    src: "/src/assets/imagery/IMG_3275.PNG",
+    alt: "Project 15",
+    title: "Project Fifteen",
+    category: "Digital",
     year: "2021",
-    description: "Kinetic typography for music video."
+    description: "Mixed media explorations."
+  },
+  {
+    id: "project-16",
+    src: "/src/assets/imagery/IMG_3487.JPG",
+    alt: "Project 16",
+    title: "Project Sixteen",
+    category: "Photography",
+    year: "2021",
+    description: "Color and mood studies."
+  },
+  {
+    id: "project-17",
+    src: "/src/assets/imagery/IMG_6883.JPG",
+    alt: "Project 17",
+    title: "Project Seventeen",
+    category: "Photography",
+    year: "2021",
+    description: "Creative direction work."
+  },
+  {
+    id: "project-18",
+    src: "/src/assets/imagery/IMG_6942.PNG",
+    alt: "Project 18",
+    title: "Project Eighteen",
+    category: "Digital",
+    year: "2021",
+    description: "Visual experiments."
+  },
+  {
+    id: "project-19",
+    src: "/src/assets/imagery/IMG_8503.jpg",
+    alt: "Project 19",
+    title: "Project Nineteen",
+    category: "Photography",
+    year: "2020",
+    description: "Documentary series."
+  },
+  {
+    id: "project-20",
+    src: "/src/assets/imagery/IMG_8794.JPG",
+    alt: "Project 20",
+    title: "Project Twenty",
+    category: "Photography",
+    year: "2020",
+    description: "Personal archive."
   }
 ];
 

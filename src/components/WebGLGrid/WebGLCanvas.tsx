@@ -12,10 +12,9 @@ interface WebGLCanvasProps {
 export const WebGLCanvas = ({ onItemClick }: WebGLCanvasProps) => {
   // Initialize grid configuration
   useGridConfig();
-  
-  // Handle inertia scrolling
+  // Start lerp scroll loop
   useInfiniteScroll();
-  
+
   return (
     <div className="fixed inset-0 z-0">
       <Canvas
@@ -27,14 +26,13 @@ export const WebGLCanvas = ({ onItemClick }: WebGLCanvasProps) => {
           far: 1000
         }}
         gl={{
-          antialias: false,
+          antialias: true,
           alpha: false,
-          powerPreference: 'high-performance',
-          preserveDrawingBuffer: false
+          powerPreference: 'high-performance'
         }}
-        dpr={[1, 1.5]}
+        dpr={[1, 2]}
         frameloop="always"
-        style={{ background: 'hsl(0 0% 4%)' }}
+        style={{ background: '#1a1a1a' }}
       >
         <GridManager onItemClick={onItemClick} />
         <InputController />
