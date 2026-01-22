@@ -1,6 +1,8 @@
 import { Canvas } from '@react-three/fiber';
+import { Environment } from '@react-three/drei';
 import { GridManager } from './GridManager';
 import { InputController } from './InputController';
+import { LivingInk } from './LivingInk';
 import { GridItem } from '@/data/portfolioData';
 import { useGridConfig } from '@/hooks/useGridConfig';
 
@@ -29,8 +31,11 @@ export const WebGLCanvas = ({ onItemClick }: WebGLCanvasProps) => {
         }}
         dpr={[1, 2]}
         frameloop="always"
-        style={{ background: '#1a1a1a' }}
+        style={{ background: '#1a1a1a', touchAction: 'none' }}
       >
+        <ambientLight intensity={0.5} />
+        <directionalLight position={[10, 10, 5]} intensity={1} />
+        {/* <LivingInk /> */}
         <GridManager onItemClick={onItemClick} />
         <InputController />
       </Canvas>

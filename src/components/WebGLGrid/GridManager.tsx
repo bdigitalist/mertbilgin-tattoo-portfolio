@@ -247,8 +247,6 @@ export const GridManager = ({ onItemClick }: GridManagerProps) => {
           onPointerOver={(e) => {
             const mesh = e.object as THREE.Mesh;
             const mat = mesh.material as THREE.MeshBasicMaterial;
-            // Subtle brightness increase
-            mat.color.setRGB(1.15, 1.15, 1.15);
             // Scale up slightly for "anchor" effect
             mesh.userData.baseScale = { x: mesh.scale.x, y: mesh.scale.y };
             mesh.scale.x *= 1.02;
@@ -259,9 +257,6 @@ export const GridManager = ({ onItemClick }: GridManagerProps) => {
           }}
           onPointerOut={(e) => {
             const mesh = e.object as THREE.Mesh;
-            const mat = mesh.material as THREE.MeshBasicMaterial;
-            // Reset brightness
-            mat.color.setRGB(1, 1, 1);
             // Reset scale
             if (mesh.userData.baseScale) {
               mesh.scale.x = mesh.userData.baseScale.x;
