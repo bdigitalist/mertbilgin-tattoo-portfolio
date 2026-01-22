@@ -22,7 +22,7 @@ export const portfolioItems: GridItem[] = [
   },
   {
     id: "project-2",
-    src: "/imagery/2.PNG",
+    src: "/imagery/2.JPG",
     alt: "Project 2",
     title: "Project Two",
     category: "Art Direction",
@@ -103,7 +103,7 @@ export const portfolioItems: GridItem[] = [
   },
   {
     id: "project-11",
-    src: "/imagery/DSCF1967.JPG",
+    src: "/imagery/3.jpg",
     alt: "Project 11",
     title: "Project Eleven",
     category: "Photography",
@@ -166,7 +166,7 @@ export const portfolioItems: GridItem[] = [
   },
   {
     id: "project-18",
-    src: "/imagery/IMG_6942.PNG",
+    src: "/imagery/Adsız_Resim 2.JPG",
     alt: "Project 18",
     title: "Project Eighteen",
     category: "Digital",

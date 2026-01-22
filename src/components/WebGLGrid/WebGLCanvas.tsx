@@ -3,7 +3,6 @@ import { GridManager } from './GridManager';
 import { InputController } from './InputController';
 import { GridItem } from '@/data/portfolioData';
 import { useGridConfig } from '@/hooks/useGridConfig';
-import { useInfiniteScroll } from '@/hooks/useInfiniteScroll';
 
 interface WebGLCanvasProps {
   onItemClick: (item: GridItem) => void;
@@ -12,8 +11,6 @@ interface WebGLCanvasProps {
 export const WebGLCanvas = ({ onItemClick }: WebGLCanvasProps) => {
   // Initialize grid configuration
   useGridConfig();
-  // Start lerp scroll loop
-  useInfiniteScroll();
 
   return (
     <div className="fixed inset-0 z-0">

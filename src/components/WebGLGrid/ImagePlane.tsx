@@ -31,7 +31,9 @@ const vertexShader = `
 const fragmentShader = `
   uniform sampler2D uTexture;
   uniform float uGrayscale;
+  uniform float uScanline;
   uniform vec3 uColor;
+  uniform float uTime;
   varying vec2 vUv;
 
   void main() {
@@ -43,6 +45,14 @@ const fragmentShader = `
 
     // Mix between grayscale and original color
     vec3 finalColor = mix(texColor.rgb, grayscaleColor, uGrayscale);
+
+    // Scanlines effect
+    float scanline = sin(vUv.y * 800.0) * 0.04;
+    finalColor -= scanline * uScanline;
+
+    // Subtle flicker/noise
+    float noise = (fract(sin(dot(vUv.xy + uTime, vec2(12.9898, 78.233))) * 43758.5453) - 0.5) * 0.02;
+    finalColor += noise * uScanline;
 
     // Apply brightness multiplier
     finalColor *= uColor;
@@ -92,12 +102,15 @@ export const ImagePlane = forwardRef<THREE.Mesh, ImagePlaneProps>(
     }, [item.src]);
 
     // Animate grayscale transition
-    useFrame((_, delta) => {
+    useFrame(({ clock }, delta) => {
       if (materialRef.current) {
         const target = isHovered ? 0 : 1;
         const speed = 4; // Transition speed
         grayscaleRef.current += (target - grayscaleRef.current) * speed * delta;
+
         materialRef.current.uniforms.uGrayscale.value = grayscaleRef.current;
+        materialRef.current.uniforms.uScanline.value = grayscaleRef.current;
+        materialRef.current.uniforms.uTime.value = clock.getElapsedTime();
 
         // Slight brightness boost on hover
         const brightness = isHovered ? 1.1 : 1.0;
@@ -143,6 +156,8 @@ export const ImagePlane = forwardRef<THREE.Mesh, ImagePlaneProps>(
           uniforms={{
             uTexture: { value: texture || placeholderTexture },
             uGrayscale: { value: 1 },
+            uScanline: { value: 1 },
+            uTime: { value: 0 },
             uColor: { value: new THREE.Color(1, 1, 1) },
           }}
         />

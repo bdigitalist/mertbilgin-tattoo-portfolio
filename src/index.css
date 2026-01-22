@@ -84,6 +84,7 @@
     body {
       cursor: auto;
     }
+
     * {
       cursor: auto !important;
     }
@@ -91,6 +92,7 @@
 }
 
 @layer components {
+
   /* Progressive blur - smooth gradient fade using CSS mask */
   /* Note: backdrop-filter is expensive in Chrome. Using layered approach instead. */
   .progressive-blur {
@@ -101,14 +103,12 @@
     pointer-events: none;
     z-index: 40;
     /* Removed backdrop-filter: blur(100px) - causes frame drops in Chrome */
-    background: linear-gradient(
-      to bottom,
-      hsl(var(--background)) 0%,
-      hsl(var(--background) / 0.85) 25%,
-      hsl(var(--background) / 0.6) 50%,
-      hsl(var(--background) / 0.3) 75%,
-      transparent 100%
-    );
+    background: linear-gradient(to bottom,
+        hsl(var(--background)) 0%,
+        hsl(var(--background) / 0.85) 25%,
+        hsl(var(--background) / 0.6) 50%,
+        hsl(var(--background) / 0.3) 75%,
+        transparent 100%);
     /* Use will-change for GPU acceleration of the gradient only */
     will-change: opacity;
   }
@@ -349,5 +349,66 @@
 @layer utilities {
   .font-mono {
     font-family: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+  }
+
+  /* CRT Flicker Animation */
+  @keyframes flicker {
+    0% {
+      opacity: 0.95;
+    }
+
+    5%,
+    10% {
+      opacity: 0.92;
+    }
+
+    15%,
+    20% {
+      opacity: 0.96;
+    }
+
+    25%,
+    30% {
+      opacity: 0.91;
+    }
+
+    35%,
+    40% {
+      opacity: 0.97;
+    }
+
+    45%,
+    50% {
+      opacity: 0.92;
+    }
+
+    55%,
+    60% {
+      opacity: 0.96;
+    }
+
+    65%,
+    70% {
+      opacity: 0.93;
+    }
+
+    75%,
+    80% {
+      opacity: 0.97;
+    }
+
+    85%,
+    90% {
+      opacity: 0.92;
+    }
+
+    95%,
+    100% {
+      opacity: 0.96;
+    }
+  }
+
+  .animate-flicker {
+    animation: flicker 0.15s infinite;
   }
 }

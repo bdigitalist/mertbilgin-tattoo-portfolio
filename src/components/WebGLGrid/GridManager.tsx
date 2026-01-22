@@ -9,6 +9,7 @@ import { getTexture } from '@/utils/textureLoader';
 // Creates a staggering effect where columns scroll at different speeds
 const COLUMN_VELOCITY = {
   multipliers: {
+    1: [1.0],
     2: [0.85, 1.15],
     3: [0.7, 1.0, 1.3],
     5: [0.6, 0.8, 1.0, 1.2, 1.4],
@@ -83,10 +84,9 @@ export const GridManager = ({ onItemClick }: GridManagerProps) => {
 
     for (let row = 0; row < rowsVisible; row++) {
       for (let col = 0; col < colsVisible; col++) {
-        // Calculate initial item index for this cell using prime offset
-        const wrappedCol = col % columns;
-        const wrappedRow = row % rows;
-        const initialItemIndex = (wrappedRow * PRIME_OFFSET + wrappedCol) % totalItems;
+        // Calculate initial item index using absolute grid position
+        // This ensures that even if columns repeat visually, they show different content
+        const initialItemIndex = ((row * PRIME_OFFSET + col) % totalItems + totalItems) % totalItems;
 
         data.push({ localCol: col, localRow: row, initialItemIndex });
       }
@@ -115,12 +115,40 @@ export const GridManager = ({ onItemClick }: GridManagerProps) => {
   useFrame(() => {
     if (!groupRef.current) return;
 
-    const { scrollX, scrollY } = useGridStore.getState();
+    const state = useGridStore.getState();
+    const { scrollX, scrollY, targetScrollX, targetScrollY, setScroll, setIsScrolling } = state;
+
+    // Smoothed scroll calculation (Lerp)
+    // Moved here from useInfiniteScroll for perfect frame sync
+    const LERP_FACTOR = 0.05;
+    const STOP_THRESHOLD = 0.1;
+
+    const dx = targetScrollX - scrollX;
+    const dy = targetScrollY - scrollY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    let currentX = scrollX;
+    let currentY = scrollY;
+
+    if (distance > STOP_THRESHOLD) {
+      currentX = scrollX + dx * LERP_FACTOR;
+      currentY = scrollY + dy * LERP_FACTOR;
+      setScroll(currentX, currentY);
+      setIsScrolling(true);
+    } else if (distance > 0) {
+      currentX = targetScrollX;
+      currentY = targetScrollY;
+      setScroll(currentX, currentY);
+      setIsScrolling(false);
+    } else if (state.isScrolling) {
+      setIsScrolling(false);
+    }
+
     const { cellW, cellH, columns, rows, colsVisible, rowsVisible } = gridConfig;
 
     // X-axis: Calculate which grid cell is at the center of the viewport
-    const centerCellX = Math.floor(scrollX / cellW);
-    const offsetX = scrollX % cellW;
+    const centerCellX = Math.floor(currentX / cellW);
+    const offsetX = currentX % cellW;
 
     // Half of visible area
     const halfColsVisible = Math.floor(colsVisible / 2);
@@ -133,14 +161,14 @@ export const GridManager = ({ onItemClick }: GridManagerProps) => {
 
       const { localCol, localRow } = meshData[index];
 
-      // X-axis: unchanged
+      // X-axis
       const gridCol = centerCellX + (localCol - halfColsVisible);
       const wrappedCol = ((gridCol % columns) + columns) % columns;
       const screenX = (localCol - halfColsVisible) * cellW - offsetX;
 
       // Y-axis: apply per-column velocity multiplier
       const velocityMult = getColumnVelocity(wrappedCol, columns);
-      const effectiveScrollY = scrollY * velocityMult;
+      const effectiveScrollY = currentY * velocityMult;
 
       const colCenterCellY = Math.floor(effectiveScrollY / cellH);
       const colOffsetY = effectiveScrollY % cellH;
@@ -149,11 +177,19 @@ export const GridManager = ({ onItemClick }: GridManagerProps) => {
       const wrappedRow = ((gridRow % rows) + rows) % rows;
       const screenY = -((localRow - halfRowsVisible) * cellH - colOffsetY);
 
-      // Use prime offset to distribute items non-sequentially
-      // This makes repetition less obvious even with few columns
-      const itemIndex = (wrappedRow * PRIME_OFFSET + wrappedCol) % totalItems;
+      // Use absolute grid indices (colOffset/rowOffset included) to distribute items
+      // This ensures that horizontal repetition is virtually impossible 
+      // because we're drawing from the full portfolio list using absolute coordinates
+      const absGridCol = gridCol;
+      const absGridRow = gridRow;
+      const itemIndex = ((absGridRow * PRIME_OFFSET + absGridCol) % totalItems + totalItems) % totalItems;
 
-      child.position.set(screenX, screenY, 0);
+      // Only update if position changed
+      if (child.position.x !== screenX || child.position.y !== screenY) {
+        child.position.set(screenX, screenY, 0);
+      }
+
+      // Scale is relatively static unless hovered, keep simple
       child.scale.set(cellWidth, cellHeight, 1);
 
       // Update texture if needed

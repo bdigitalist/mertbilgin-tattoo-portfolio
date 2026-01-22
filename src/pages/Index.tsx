@@ -16,11 +16,11 @@ const Index = () => {
   const isTouchDevice = useIsTouchDevice();
   const isMobile = useIsMobile();
   const { setSelectedItem, isPreloaderComplete } = useGridStore();
-  
+
   const handleItemClick = useCallback((item: GridItem) => {
     setSelectedItem(item);
   }, [setSelectedItem]);
-  
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-background">
       {/* Preloader */}
@@ -28,19 +28,19 @@ const Index = () => {
 
       {/* WebGL Grid - only render after preloader completes */}
       {isPreloaderComplete && <WebGLCanvas onItemClick={handleItemClick} />}
-      
+
       {/* Progressive blur edges */}
       <ProgressiveBlur position="top" />
       <ProgressiveBlur position="bottom" />
-      
+
       {/* HUD */}
       <HUDHeader isMobile={isMobile} />
       <FooterTitle />
-      
+
       {/* Info panel (desktop only) */}
       {!isMobile && <InfoPanel />}
-      
-      
+
+
       {/* Custom cursor (desktop only) */}
       {!isTouchDevice && <CustomCursor />}
 

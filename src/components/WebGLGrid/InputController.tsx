@@ -29,8 +29,7 @@ export const InputController = () => {
 
       useGridStore.getState().addTargetScroll(deltaX, deltaY);
 
-      // Reset cursor - onPointerOut may not fire when grid moves under cursor
-      document.body.style.cursor = 'none';
+      useGridStore.getState().addTargetScroll(deltaX, deltaY);
     };
 
     // Pointer down
@@ -43,8 +42,8 @@ export const InputController = () => {
       useGridStore.getState().setIsDragging(true);
       (e.target as Element)?.setPointerCapture?.(e.pointerId);
 
-      // Reset cursor - prevents stuck pointer cursor during drag
-      document.body.style.cursor = 'none';
+      useGridStore.getState().setIsDragging(true);
+      (e.target as Element)?.setPointerCapture?.(e.pointerId);
     };
 
     // Pointer move

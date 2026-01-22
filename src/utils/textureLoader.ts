@@ -14,7 +14,7 @@ const textureLoader = new THREE.TextureLoader();
 textureLoader.crossOrigin = 'anonymous';
 
 /**
- * Load a single texture and add to cache
+ * Load a single texture and add to cache with downscaling
  */
 function loadTexture(src: string): Promise<THREE.Texture> {
   return new Promise((resolve, reject) => {
@@ -23,31 +23,70 @@ function loadTexture(src: string): Promise<THREE.Texture> {
       return;
     }
 
-    textureLoader.load(
-      src,
-      (texture) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      // Downscale if image is too large (max 2048 in any dimension)
+      const MAX_SIZE = 2048;
+      let width = img.width;
+      let height = img.height;
+
+      if (width > MAX_SIZE || height > MAX_SIZE) {
+        if (width > height) {
+          height = Math.round((height * MAX_SIZE) / width);
+          width = MAX_SIZE;
+        } else {
+          width = Math.round((width * MAX_SIZE) / height);
+          height = MAX_SIZE;
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const texture = new THREE.CanvasTexture(canvas);
         texture.minFilter = THREE.LinearFilter;
         texture.magFilter = THREE.LinearFilter;
         texture.colorSpace = THREE.SRGBColorSpace;
         texture.generateMipmaps = false;
+
         textureCache.set(src, texture);
         resolve(texture);
-      },
-      undefined,
-      (error) => {
-        console.warn('Failed to load texture:', src);
-        // Create a placeholder texture on error
-        const canvas = document.createElement('canvas');
-        canvas.width = 4;
-        canvas.height = 4;
-        const ctx = canvas.getContext('2d')!;
-        ctx.fillStyle = '#3a3a4a';
-        ctx.fillRect(0, 0, 4, 4);
-        const placeholderTexture = new THREE.CanvasTexture(canvas);
-        textureCache.set(src, placeholderTexture);
-        resolve(placeholderTexture);
+      } else {
+        // Use standard loader if size is acceptable
+        textureLoader.load(
+          src,
+          (texture) => {
+            texture.minFilter = THREE.LinearFilter;
+            texture.magFilter = THREE.LinearFilter;
+            texture.colorSpace = THREE.SRGBColorSpace;
+            texture.generateMipmaps = false;
+            textureCache.set(src, texture);
+            resolve(texture);
+          },
+          undefined,
+          (err) => reject(err)
+        );
       }
-    );
+    };
+
+    img.onerror = () => {
+      console.warn('Failed to load image:', src);
+      // Create a placeholder texture on error
+      const canvas = document.createElement('canvas');
+      canvas.width = 4;
+      canvas.height = 4;
+      const ctx = canvas.getContext('2d')!;
+      ctx.fillStyle = '#3a3a4a';
+      ctx.fillRect(0, 0, 4, 4);
+      const placeholderTexture = new THREE.CanvasTexture(canvas);
+      textureCache.set(src, placeholderTexture);
+      resolve(placeholderTexture);
+    };
+
+    img.src = src;
   });
 }
 
