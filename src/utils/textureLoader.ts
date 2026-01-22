@@ -26,8 +26,8 @@ function loadTexture(src: string): Promise<THREE.Texture> {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => {
-      // Downscale if image is too large (max 2048 in any dimension)
-      const MAX_SIZE = 2048;
+      // Downscale if image is too large (max 1024 in any dimension for grid performance)
+      const MAX_SIZE = 1024;
       let width = img.width;
       let height = img.height;
 

@@ -28,8 +28,6 @@ export const InputController = () => {
       const deltaY = e.deltaY * CONFIG.wheelMultiplier;
 
       useGridStore.getState().addTargetScroll(deltaX, deltaY);
-
-      useGridStore.getState().addTargetScroll(deltaX, deltaY);
     };
 
     // Pointer down
@@ -38,9 +36,6 @@ export const InputController = () => {
       lastPosRef.current = { x: e.clientX, y: e.clientY };
       isFirstMoveRef.current = true;
       hasMovedRef.current = false;
-
-      useGridStore.getState().setIsDragging(true);
-      (e.target as Element)?.setPointerCapture?.(e.pointerId);
 
       useGridStore.getState().setIsDragging(true);
       (e.target as Element)?.setPointerCapture?.(e.pointerId);

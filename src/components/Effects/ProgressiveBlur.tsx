@@ -1,21 +1,28 @@
+import React from 'react';
+
 interface ProgressiveBlurProps {
-  position: 'top' | 'bottom';
+    position: 'top' | 'bottom';
+    className?: string;
 }
 
-export const ProgressiveBlur = ({ position }: ProgressiveBlurProps) => {
-  const isTop = position === 'top';
-  const gradientDirection = isTop ? 'to bottom' : 'to top';
-
-  return (
-    <div
-      className="progressive-blur"
-      style={{
-        [isTop ? 'top' : 'bottom']: 0,
-        background: `linear-gradient(${gradientDirection}, hsl(var(--background)) 0%, hsl(var(--background) / 0.6) 35%, hsl(var(--background) / 0.2) 65%, transparent 100%)`,
-        maskImage: `linear-gradient(${gradientDirection}, black 0%, black 25%, transparent 100%)`,
-        WebkitMaskImage: `linear-gradient(${gradientDirection}, black 0%, black 25%, transparent 100%)`,
-      }}
-      aria-hidden="true"
-    />
-  );
+/**
+ * ProgressiveBlur Component
+ * 
+ * Adds a gradient blur/fade effect to the top or bottom of the screen.
+ * 
+ * CONFIGURATION:
+ * The height and gradient colors are defined in src/index.css under the .progressive-blur class.
+ * 
+ * To change height: Modify the 'height' property in .progressive-blur
+ * To change intensity: Modify the colors/opacity in the linear-gradient
+ * To change blur amount: We use a mask/gradient approach instead of backdrop-filter for performance.
+ * If you want real blur (more expensive), uncomment backdrop-filter in CSS.
+ */
+export const ProgressiveBlur: React.FC<ProgressiveBlurProps> = ({ position, className = '' }) => {
+    return (
+        <div
+            className={`progressive-blur ${position === 'bottom' ? 'rotate-180 bottom-0' : 'top-0'} ${className}`}
+            aria-hidden="true"
+        />
+    );
 };

@@ -81,12 +81,17 @@ export const GridManager = ({ onItemClick }: GridManagerProps) => {
     }> = [];
 
     const totalItems = portfolioItems.length;
+    const halfColsVisible = Math.floor(colsVisible / 2);
+    const halfRowsVisible = Math.floor(rowsVisible / 2);
 
     for (let row = 0; row < rowsVisible; row++) {
       for (let col = 0; col < colsVisible; col++) {
-        // Calculate initial item index using absolute grid position
-        // This ensures that even if columns repeat visually, they show different content
-        const initialItemIndex = ((row * PRIME_OFFSET + col) % totalItems + totalItems) % totalItems;
+        // Calculate initial item index using the same logic as useFrame
+        // This prevents the "jump" on the first frame where items would otherwise 
+        // swap to different textures because of the half-screen offset shift.
+        const gridCol = col - halfColsVisible;
+        const gridRow = row - halfRowsVisible;
+        const initialItemIndex = ((gridRow * PRIME_OFFSET + gridCol) % totalItems + totalItems) % totalItems;
 
         data.push({ localCol: col, localRow: row, initialItemIndex });
       }
@@ -192,15 +197,19 @@ export const GridManager = ({ onItemClick }: GridManagerProps) => {
       // Scale is relatively static unless hovered, keep simple
       child.scale.set(cellWidth, cellHeight, 1);
 
-      // Update texture if needed
+      // Update texture if needed - only if item changed
       const item = portfolioItems[itemIndex];
       const material = materials[index];
-      const tex = getTexture(item.src);
 
-      if (tex && material.map !== tex) {
-        material.map = tex;
-        material.color.setHex(0xffffff);
-        material.needsUpdate = true;
+      // Optimization: only update if item mapping changed
+      if (child.userData.currentItemIndex !== itemIndex) {
+        const tex = getTexture(item.src);
+        if (tex) {
+          material.map = tex;
+          material.color.setHex(0xffffff);
+          // child.userData.currentItemIndex must be updated here
+        }
+        child.userData.currentItemIndex = itemIndex;
       }
 
       // Store item data for click handling

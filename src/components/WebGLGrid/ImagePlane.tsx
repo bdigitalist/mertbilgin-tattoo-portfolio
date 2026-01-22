@@ -4,11 +4,11 @@ import * as THREE from 'three';
 import { GridItem } from '@/data/portfolioData';
 
 interface ImagePlaneProps {
-  item: GridItem;
-  position: [number, number, number];
-  width: number;
-  height: number;
-  onClick: () => void;
+    item: GridItem;
+    position: [number, number, number];
+    width: number;
+    height: number;
+    onClick: () => void;
 }
 
 // Texture cache
@@ -31,9 +31,7 @@ const vertexShader = `
 const fragmentShader = `
   uniform sampler2D uTexture;
   uniform float uGrayscale;
-  uniform float uScanline;
   uniform vec3 uColor;
-  uniform float uTime;
   varying vec2 vUv;
 
   void main() {
@@ -46,14 +44,6 @@ const fragmentShader = `
     // Mix between grayscale and original color
     vec3 finalColor = mix(texColor.rgb, grayscaleColor, uGrayscale);
 
-    // Scanlines effect
-    float scanline = sin(vUv.y * 800.0) * 0.04;
-    finalColor -= scanline * uScanline;
-
-    // Subtle flicker/noise
-    float noise = (fract(sin(dot(vUv.xy + uTime, vec2(12.9898, 78.233))) * 43758.5453) - 0.5) * 0.02;
-    finalColor += noise * uScanline;
-
     // Apply brightness multiplier
     finalColor *= uColor;
 
@@ -62,108 +52,104 @@ const fragmentShader = `
 `;
 
 export const ImagePlane = forwardRef<THREE.Mesh, ImagePlaneProps>(
-  ({ item, position, width, height, onClick }, ref) => {
-    const meshRef = useRef<THREE.Mesh>(null);
-    const materialRef = useRef<THREE.ShaderMaterial>(null);
-    const [texture, setTexture] = useState<THREE.Texture | null>(null);
-    const [isHovered, setIsHovered] = useState(false);
-    const grayscaleRef = useRef(1); // Start grayscale
+    ({ item, position, width, height, onClick }, ref) => {
+        const meshRef = useRef<THREE.Mesh>(null);
+        const materialRef = useRef<THREE.ShaderMaterial>(null);
+        const [texture, setTexture] = useState<THREE.Texture | null>(null);
+        const [isHovered, setIsHovered] = useState(false);
+        const grayscaleRef = useRef(1); // Start grayscale
 
-    useEffect(() => {
-      // Check cache first
-      if (textureCache.has(item.src)) {
-        setTexture(textureCache.get(item.src)!);
-        return;
-      }
+        useEffect(() => {
+            // Check cache first
+            if (textureCache.has(item.src)) {
+                setTexture(textureCache.get(item.src)!);
+                return;
+            }
 
-      // Prevent duplicate loads
-      if (loadingTextures.has(item.src)) {
-        return;
-      }
+            // Prevent duplicate loads
+            if (loadingTextures.has(item.src)) {
+                return;
+            }
 
-      loadingTextures.add(item.src);
+            loadingTextures.add(item.src);
 
-      textureLoader.load(
-        item.src,
-        (loadedTexture) => {
-          loadedTexture.minFilter = THREE.LinearFilter;
-          loadedTexture.magFilter = THREE.LinearFilter;
-          loadedTexture.colorSpace = THREE.SRGBColorSpace;
-          textureCache.set(item.src, loadedTexture);
-          loadingTextures.delete(item.src);
-          setTexture(loadedTexture);
-        },
-        undefined,
-        (error) => {
-          console.warn('Failed to load:', item.src);
-          loadingTextures.delete(item.src);
-        }
-      );
-    }, [item.src]);
+            textureLoader.load(
+                item.src,
+                (loadedTexture) => {
+                    loadedTexture.minFilter = THREE.LinearFilter;
+                    loadedTexture.magFilter = THREE.LinearFilter;
+                    loadedTexture.colorSpace = THREE.SRGBColorSpace;
+                    textureCache.set(item.src, loadedTexture);
+                    loadingTextures.delete(item.src);
+                    setTexture(loadedTexture);
+                },
+                undefined,
+                (error) => {
+                    console.warn('Failed to load:', item.src);
+                    loadingTextures.delete(item.src);
+                }
+            );
+        }, [item.src]);
 
-    // Animate grayscale transition
-    useFrame(({ clock }, delta) => {
-      if (materialRef.current) {
-        const target = isHovered ? 0 : 1;
-        const speed = 4; // Transition speed
-        grayscaleRef.current += (target - grayscaleRef.current) * speed * delta;
+        // Animate grayscale transition
+        useFrame(({ clock }, delta) => {
+            if (materialRef.current) {
+                const target = isHovered ? 0 : 1;
+                const speed = 4; // Transition speed
+                grayscaleRef.current += (target - grayscaleRef.current) * speed * delta;
 
-        materialRef.current.uniforms.uGrayscale.value = grayscaleRef.current;
-        materialRef.current.uniforms.uScanline.value = grayscaleRef.current;
-        materialRef.current.uniforms.uTime.value = clock.getElapsedTime();
+                materialRef.current.uniforms.uGrayscale.value = grayscaleRef.current;
 
-        // Slight brightness boost on hover
-        const brightness = isHovered ? 1.1 : 1.0;
-        materialRef.current.uniforms.uColor.value.setScalar(
-          1 + (brightness - 1) * (1 - grayscaleRef.current)
+                // Slight brightness boost on hover
+                const brightness = isHovered ? 1.1 : 1.0;
+                materialRef.current.uniforms.uColor.value.setScalar(
+                    1 + (brightness - 1) * (1 - grayscaleRef.current)
+                );
+            }
+        });
+
+        // Create placeholder texture for loading state
+        const placeholderTexture = useRef(
+            new THREE.DataTexture(
+                new Uint8Array([58, 58, 74, 255]),
+                1,
+                1,
+                THREE.RGBAFormat
+            )
+        ).current;
+
+        return (
+            <mesh
+                ref={ref || meshRef}
+                position={position}
+                scale={[width, height, 1]}
+                onClick={(e) => {
+                    e.stopPropagation();
+                    onClick();
+                }}
+                onPointerOver={() => {
+                    setIsHovered(true);
+                    document.body.style.cursor = 'pointer';
+                }}
+                onPointerOut={() => {
+                    setIsHovered(false);
+                    document.body.style.cursor = 'none';
+                }}
+            >
+                <planeGeometry args={[1, 1]} />
+                <shaderMaterial
+                    ref={materialRef}
+                    vertexShader={vertexShader}
+                    fragmentShader={fragmentShader}
+                    uniforms={{
+                        uTexture: { value: texture || placeholderTexture },
+                        uGrayscale: { value: 1 },
+                        uColor: { value: new THREE.Color(1, 1, 1) },
+                    }}
+                />
+            </mesh>
         );
-      }
-    });
-
-    // Create placeholder texture for loading state
-    const placeholderTexture = useRef(
-      new THREE.DataTexture(
-        new Uint8Array([58, 58, 74, 255]),
-        1,
-        1,
-        THREE.RGBAFormat
-      )
-    ).current;
-
-    return (
-      <mesh
-        ref={ref || meshRef}
-        position={position}
-        scale={[width, height, 1]}
-        onClick={(e) => {
-          e.stopPropagation();
-          onClick();
-        }}
-        onPointerOver={() => {
-          setIsHovered(true);
-          document.body.style.cursor = 'pointer';
-        }}
-        onPointerOut={() => {
-          setIsHovered(false);
-          document.body.style.cursor = 'none';
-        }}
-      >
-        <planeGeometry args={[1, 1]} />
-        <shaderMaterial
-          ref={materialRef}
-          vertexShader={vertexShader}
-          fragmentShader={fragmentShader}
-          uniforms={{
-            uTexture: { value: texture || placeholderTexture },
-            uGrayscale: { value: 1 },
-            uScanline: { value: 1 },
-            uTime: { value: 0 },
-            uColor: { value: new THREE.Color(1, 1, 1) },
-          }}
-        />
-      </mesh>
-    );
-  }
+    }
 );
 
 ImagePlane.displayName = 'ImagePlane';
