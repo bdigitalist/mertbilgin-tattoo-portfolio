@@ -12,7 +12,7 @@ const GRID_CONFIG = {
   columns: {
     desktop: 3,              // 3 columns on wide screens
     tablet: 2,               // 2 columns on tablets
-    mobile: 1,               // 1 column on phones
+    mobile: 2,               // 2 columns on phones
   },
 };
 
@@ -22,14 +22,18 @@ export const calculateGridConfigSync = () => {
   const { gap, aspectRatio, breakpoints, columns } = GRID_CONFIG;
 
   let cols = columns.desktop;
+  let divisor = columns.desktop; // How many items visible per row visually
+
   if (width < breakpoints.tablet) {
     cols = columns.mobile;
+    divisor = 1.5; // Show 1.5 items per row on mobile
   } else if (width < breakpoints.desktop) {
     cols = columns.tablet;
+    divisor = columns.tablet;
   }
 
-  const totalGaps = (cols + 1) * gap;
-  const cellWidth = (width - totalGaps) / cols;
+  const totalGaps = (divisor + 1) * gap; // Gaps based on visual divisor
+  const cellWidth = (width - totalGaps) / divisor; // Width based on visual divisor
   const cellHeight = cellWidth * aspectRatio;
 
   return { columns: cols, cellWidth, cellHeight, gap };

@@ -125,7 +125,9 @@ export const GridManager = ({ onItemClick }: GridManagerProps) => {
 
     // Smoothed scroll calculation (Lerp)
     // Moved here from useInfiniteScroll for perfect frame sync
-    const LERP_FACTOR = 0.05;
+    // Dynamic lerp: tight follow when dragging (0.3), smooth inertia when released (0.05)
+    // Increased base precision for mobile feel
+    const LERP_FACTOR = state.isDragging ? 0.3 : 0.05;
     const STOP_THRESHOLD = 0.1;
 
     const dx = targetScrollX - scrollX;
